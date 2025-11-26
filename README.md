@@ -1,10 +1,10 @@
-# ZON Format v1.0.0 - TypeScript/JavaScript
+# ZON Format v1.0.1 - TypeScript/JavaScript
 
 **Zero Overhead Notation** - A human-readable data serialization format optimized for LLM token efficiency, JSON for LLMs.
 
 [![npm version](https://img.shields.io/npm/v/zon-format.svg)](https://www.npmjs.com/package/zon-format)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-Apache--2.0-orange.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 > 🚀 **14% better compression than TOON** | 📊 **30-67% compression vs JSON** | 🔍 **100% Human Readable**
 
@@ -171,7 +171,7 @@ Encodes a JavaScript object or array into a ZON-formatted string.
 
 **Parameters:**
 - `data` (any): The input data to encode. Must be JSON-serializable (object, array, string, number, boolean, null).
-- `anchorInterval` (number, optional): Legacy parameter, defaults to 50. Not used in v1.0.0.
+- `anchorInterval` (number, optional): Legacy parameter, defaults to 50. Not used in v1.0.1.
 
 **Returns:**
 - `string`: The ZON-encoded string.
@@ -402,7 +402,7 @@ This is a port of the original Python implementation. Contributions are welcome!
 
 ## 📄 License
 
-**Apache-2.0 License**
+**MIT License**
 
 Copyright (c) 2025 Roni Bhakta. All Rights Reserved.
 
@@ -427,4 +427,4 @@ See [LICENSE](LICENSE) for full terms.
 
 **Made with ❤️ for the LLM community**
 
-*ZON v1.0.0 - Compression that scales with complexity*
+*ZON v1.0.1 - Compression that scales with complexity*
