@@ -1,7 +1,7 @@
 {
   "name": "zon-format",
-  "version": "1.0.0",
-  "description": "Zero Overhead Notation v1.0.0 - Human-readable data format with 30%+ compression over JSON",
+  "version": "1.0.1",
+  "description": "Zero Overhead Notation v1.0.1 - Human-readable data format with 30%+ compression over JSON",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -22,7 +22,7 @@
     "token-efficient"
   ],
   "author": "Roni Bhakta <ronibhakta1@gmail.com>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/ZON-Format/zon-TS.git"
