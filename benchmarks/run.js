@@ -166,6 +166,12 @@ results.push(benchmarkDataset(
   'Semi-uniform data with some missing/variable fields'
 ));
 
+results.push(benchmarkDataset(
+  'Heavily Nested Data',
+  datasets.heavilyNested,
+  'Complex nested structure with deep objects and arrays'
+));
+
 // Summary
 console.log(`\n${'═'.repeat(80)}`);
 console.log('📈 OVERALL SUMMARY');

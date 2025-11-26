@@ -1,5 +1,5 @@
 /**
- * ZON Decoder v1.0.1 - ClearText Format
+ * ZON Decoder v1.0.2 - ClearText Format
  *
  * This decoder parses clean, document-style ZON with YAML-like metadata
  * and CSV-like tables using @table syntax.
@@ -18,7 +18,7 @@ interface TableInfo {
 
 export class ZonDecoder {
   /**
-   * Decode ZON v1.0.1 ClearText format to original data structure.
+   * Decode ZON v1.0.2 ClearText format to original data structure.
    */
   decode(zonStr: string): any {
     if (!zonStr) {
@@ -371,20 +371,11 @@ export class ZonDecoder {
     }
 
     // Try number
-    try {
-      if (trimmed.includes('.')) {
-        const num = parseFloat(trimmed);
-        if (!isNaN(num)) {
-          return num;
-        }
-      } else {
-        const num = parseInt(trimmed, 10);
-        if (!isNaN(num)) {
-          return num;
-        }
+    if (trimmed !== '') {
+      const num = Number(trimmed);
+      if (!isNaN(num)) {
+        return num;
       }
-    } catch (e) {
-      // ignore
     }
 
     // String
@@ -460,20 +451,11 @@ export class ZonDecoder {
     }
 
     // Try number
-    try {
-      if (trimmed.includes('.')) {
-        const num = parseFloat(trimmed);
-        if (!isNaN(num)) {
-          return num;
-        }
-      } else {
-        const num = parseInt(trimmed, 10);
-        if (!isNaN(num)) {
-          return num;
-        }
+    if (trimmed !== '') {
+      const num = Number(trimmed);
+      if (!isNaN(num)) {
+        return num;
       }
-    } catch (e) {
-      // ignore
     }
 
     // Double-encoded JSON string fallback
@@ -557,7 +539,7 @@ export class ZonDecoder {
 }
 
 /**
- * Convenience function to decode ZON v1.0.1 format to original data.
+ * Convenience function to decode ZON v1.0.2 format to original data.
  */
 export function decode(data: string): any {
   return new ZonDecoder().decode(data);

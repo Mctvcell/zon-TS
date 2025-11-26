@@ -1,4 +1,4 @@
-# ZON Format v1.0.1 - TypeScript/JavaScript
+# ZON Format v1.0.2 - TypeScript/JavaScript
 
 **Zero Overhead Notation** - A human-readable data serialization format optimized for LLM token efficiency, JSON for LLMs.
 
@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> 🚀 **14% better compression than TOON** | 📊 **30-67% compression vs JSON** | 🔍 **100% Human Readable**
+> 🚀 **18% better compression than TOON** | 📊 **30-67% compression vs JSON** | 🔍 **100% Human Readable**
 
 ---
 
@@ -46,9 +46,9 @@ ZON is a **smart compression format** designed specifically for transmitting str
 
 **ZON vs TOON vs JSON** (Token Efficiency)
 
-We benchmarked ZON against [TOON](https://github.com/toon-format/toon) and JSON using the **GPT-5 o200k_base tokenizer** across 7 different dataset types.
+We benchmarked ZON against [TOON](https://github.com/toon-format/toon) and JSON using the **GPT-5 o200k_base tokenizer** across 8 different dataset types.
 
-**🏆 ZON won on ALL 7 datasets.**
+**🏆 ZON won on ALL 8 datasets.**
 
 | Dataset Type | ZON Tokens | vs TOON | vs JSON (formatted) | vs JSON (compact) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -57,13 +57,14 @@ We benchmarked ZON against [TOON](https://github.com/toon-format/toon) and JSON 
 | **Mixed Structures** | **125** 👑 | -8.8% | -62.8% | -38.7% |
 | **Deeply Nested** | **113** 👑 | -24.2% | -51.1% | -8.9% |
 | **Semi-uniform Logs** | **287** 👑 | -26.2% | -40.2% | -9.5% |
+| **Heavily Nested** | **766** 👑 | -24.3% | -46.2% | -5.8% |
 
 > *Negative percentage means fewer tokens (better).*
 
 **Summary:**
-- **ZON is 13.8% more efficient than TOON** on average
-- **ZON is 56.9% more efficient than JSON** (formatted)
-- **ZON is 27.5% more efficient than JSON** (compact)
+- **ZON is 18.0% more efficient than TOON** on average
+- **ZON is 53.5% more efficient than JSON** (formatted)
+- **ZON is 20.9% more efficient than JSON** (compact)
 
 [View full benchmark results](./benchmarks/RESULTS.md)
 

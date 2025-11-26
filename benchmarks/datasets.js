@@ -151,6 +151,100 @@ const eventLogs = [
   { id: 7, timestamp: '2025-01-15T10:30:00Z', event: 'user.settings', userId: 'u123', settings: { theme: 'dark', notifications: true }, success: true }
 ];
 
+// 8. Heavily Nested Data (5 items)
+const heavilyNested = [
+  {
+    id: 'sys-001',
+    config: {
+      network: {
+        ipv4: { address: '192.168.1.10', mask: '255.255.255.0', gateway: '192.168.1.1' },
+        ipv6: { enabled: true, address: 'fe80::1' },
+        dns: { primary: '8.8.8.8', secondary: '8.8.4.4' }
+      },
+      services: {
+        http: { port: 80, active: true },
+        ssh: { port: 22, active: true, keys: ['rsa-key-1', 'ed25519-key-1'] }
+      }
+    },
+    metrics: {
+      cpu: { cores: 4, load: [0.1, 0.2, 0.1, 0.0] },
+      memory: { total: 16384, free: 8192, cached: 4096 }
+    }
+  },
+  {
+    id: 'sys-002',
+    config: {
+      network: {
+        ipv4: { address: '192.168.1.11', mask: '255.255.255.0', gateway: '192.168.1.1' },
+        ipv6: { enabled: false, address: null },
+        dns: { primary: '1.1.1.1', secondary: '1.0.0.1' }
+      },
+      services: {
+        http: { port: 8080, active: true },
+        ssh: { port: 2222, active: true, keys: ['rsa-key-2'] }
+      }
+    },
+    metrics: {
+      cpu: { cores: 8, load: [0.5, 0.6, 0.4, 0.5, 0.3, 0.2, 0.1, 0.1] },
+      memory: { total: 32768, free: 12000, cached: 8000 }
+    }
+  },
+  {
+    id: 'sys-003',
+    config: {
+      network: {
+        ipv4: { address: '10.0.0.5', mask: '255.0.0.0', gateway: '10.0.0.1' },
+        ipv6: { enabled: true, address: 'fe80::3' },
+        dns: { primary: '8.8.8.8', secondary: null }
+      },
+      services: {
+        http: { port: 80, active: false },
+        ssh: { port: 22, active: true, keys: [] }
+      }
+    },
+    metrics: {
+      cpu: { cores: 2, load: [0.9, 0.8] },
+      memory: { total: 4096, free: 512, cached: 1024 }
+    }
+  },
+  {
+    id: 'sys-004',
+    config: {
+      network: {
+        ipv4: { address: '172.16.0.20', mask: '255.240.0.0', gateway: '172.16.0.1' },
+        ipv6: { enabled: true, address: 'fe80::4' },
+        dns: { primary: '9.9.9.9', secondary: '149.112.112.112' }
+      },
+      services: {
+        http: { port: 443, active: true },
+        ssh: { port: 22, active: false, keys: ['rsa-key-admin'] }
+      }
+    },
+    metrics: {
+      cpu: { cores: 16, load: [0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] },
+      memory: { total: 65536, free: 60000, cached: 2048 }
+    }
+  },
+  {
+    id: 'sys-005',
+    config: {
+      network: {
+        ipv4: { address: '192.168.100.50', mask: '255.255.255.0', gateway: '192.168.100.1' },
+        ipv6: { enabled: false, address: null },
+        dns: { primary: '8.8.8.8', secondary: '8.8.4.4' }
+      },
+      services: {
+        http: { port: 80, active: true },
+        ssh: { port: 22, active: true, keys: ['ed25519-key-5', 'rsa-key-backup'] }
+      }
+    },
+    metrics: {
+      cpu: { cores: 4, load: [0.4, 0.4, 0.3, 0.3] },
+      memory: { total: 8192, free: 2048, cached: 1024 }
+    }
+  }
+];
+
 module.exports = {
   ecommerceOrders,
   employees,
@@ -158,5 +252,6 @@ module.exports = {
   hikeData,
   githubRepos,
   deepConfig,
-  eventLogs
+  eventLogs,
+  heavilyNested
 };

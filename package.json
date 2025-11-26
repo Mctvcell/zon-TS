@@ -1,6 +1,6 @@
 {
   "name": "zon-format",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Zero Overhead Notation v1.0.1 - Human-readable data format with 30%+ compression over JSON",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
