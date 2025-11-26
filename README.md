@@ -7,6 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 > 🚀 **18% better compression than TOON** | 📊 **30-67% compression vs JSON** | 🔍 **100% Human Readable**
+<img width="538" height="80" alt="Screenshot 2025-11-26 at 9 46 12 AM" src="https://github.com/user-attachments/assets/165d7f37-c494-46fd-b231-366cb7181d45" />
 
 ---
 
