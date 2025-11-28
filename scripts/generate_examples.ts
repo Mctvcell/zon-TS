@@ -104,7 +104,120 @@ const examples = [
   { name: '06_nested_objects', data: nestedObjects, desc: 'Nested Objects & Arrays' },
   { name: '07_deep_config', data: deepConfig, desc: 'Deeply Nested Configuration' },
   { name: '08_complex_nested', data: heavilyNested, desc: 'Heavily Nested Complex Data' },
-  { name: '09_unified_dataset', data: datasets.unifiedDataset, desc: 'Unified Benchmark Dataset' }
+  { name: '09_unified_dataset', data: datasets.unifiedDataset, desc: 'Unified Benchmark Dataset' },
+  { 
+    name: '10_dirty_data', 
+    data: {
+      primitives: {
+        integers: [0, 1, -1, 42, -42, 9007199254740991, -9007199254740991],
+        floats: [0.0, 1.1, -1.1, 3.14159, -2.71828, 1.5e10, 1.5e-10],
+        booleans: [true, false],
+        nulls: [null],
+        strings: [
+          "", " ", "simple", "with spaces", "with, comma", "with: colon",
+          "with \"quotes\"", "with 'single quotes'", "with \n newline",
+          "https://example.com/path?query=1&param=2",
+          "special: !@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`"
+        ]
+      },
+      edge_cases: {
+        empty_obj: {},
+        empty_arr: [],
+        nested_empty: { a: {}, b: [] },
+        mixed_arr: [1, "two", true, null, { a: 1 }, [2]]
+      }
+    }, 
+    desc: 'Dirty Data (All Types & Edge Cases)' 
+  },
+  {
+    name: '11_complex_nested',
+    data: {
+      level1: {
+        id: "L1",
+        meta: { created: "2025-01-01", active: true },
+        children: [
+          {
+            id: "L2-A",
+            type: "group",
+            items: [
+              { id: "L3-A1", val: 10, tags: ["a", "b"] },
+              { id: "L3-A2", val: 20, tags: ["c"] }
+            ],
+            config: {
+              settings: {
+                deep: {
+                  deeper: {
+                    deepest: "value"
+                  }
+                }
+              }
+            }
+          },
+          {
+            id: "L2-B",
+            type: "leaf",
+            data: [
+              { x: 1, y: 2 },
+              { x: 3, y: 4, z: 5 }, // Mixed keys
+              { x: 6 }
+            ]
+          }
+        ]
+      }
+    },
+    desc: 'Deeply Nested Complex Structure'
+  },
+  {
+    name: '12_nasty_strings',
+    data: {
+      unicode: [
+        "Emoji: 🚀🔥🎉💀👽",
+        "Chinese: 你好世界",
+        "Arabic: مرحبا بالعالم",
+        "Russian: Привет мир",
+        "Zalgo: H̴e̴l̴l̴o̴ ̴W̴o̴r̴l̴d̴"
+      ],
+      control_chars: [
+        "Null: \u0000",
+        "Backspace: \b",
+        "Form Feed: \f",
+        "Newline: \n",
+        "Carriage Return: \r",
+        "Tab: \t",
+        "Vertical Tab: \v"
+      ],
+      json_injection: [
+        "{\"key\": \"value\"}",
+        "[1, 2, 3]",
+        "null",
+        "true",
+        "false",
+        "// comment",
+        "/* comment */"
+      ],
+      script_injection: [
+        "<script>alert('xss')</script>",
+        "javascript:void(0)",
+        "'; DROP TABLE users; --"
+      ],
+      path_traversal: [
+        "../../etc/passwd",
+        "..\\..\\windows\\system32\\config\\sam"
+      ]
+    },
+    desc: 'Nasty Strings (Unicode, Injection, Control Chars)'
+  },
+  {
+    name: '13_deep_recursion',
+    data: (function() {
+      let obj: any = { end: "bottom" };
+      for (let i = 0; i < 50; i++) {
+        obj = { level: i, next: obj };
+      }
+      return obj;
+    })(),
+    desc: 'Deep Recursion (50 Levels)'
+  }
 ];
 
 console.log(`Generating examples in ${EXAMPLES_DIR}...\n`);
