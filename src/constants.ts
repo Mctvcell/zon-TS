@@ -1,20 +1,27 @@
 /**
- * ZON Protocol Constants v1.0.1 (ClearText)
+ * ZON Protocol Constants v1.0.3
  */
 
-export const VERSION = "1.0.1";
-
 // Format markers
-export const TABLE_MARKER = "@";          // @hikes(3): col1, col2
-export const META_SEPARATOR = ":";        // key:value (no space for compactness)
+export const TABLE_MARKER = '@';
+export const META_SEPARATOR = ':';
 
-// Stream Tokens
-export const GAS_TOKEN = "_";             // Auto-increment token
-export const LIQUID_TOKEN = "^";          // Repeat previous value
+// Reserved tokens (for future use)
+export const GAS_TOKEN = '_';      // Gas/placeholder
+export const LIQUID_TOKEN = '^';   // Liquid/variable
 
-// Thresholds
-export const DEFAULT_ANCHOR_INTERVAL = 50;
-export const SINGLETON_THRESHOLD = 1;     // Flatten lists with 1 item to metadata
+// Default anchor interval for large datasets
+export const DEFAULT_ANCHOR_INTERVAL = 100;
+
+// Security limits (DOS prevention)
+export const MAX_DOCUMENT_SIZE = 100 * 1024 * 1024;  // 100 MB
+export const MAX_LINE_LENGTH = 1024 * 1024;          // 1 MB
+export const MAX_ARRAY_LENGTH = 1_000_000;           // 1 million items
+export const MAX_OBJECT_KEYS = 100_000;              // 100K keys
+export const MAX_NESTING_DEPTH = 100;                // Already enforced in decoder
+
+// Legacy compatibility (v1.x)
+export const LEGACY_TABLE_MARKER = '@';     // Flatten lists with 1 item to metadata
 export const INLINE_THRESHOLD_ROWS = 0;
 
 // Legacy compatibility (kept for potential fallback)

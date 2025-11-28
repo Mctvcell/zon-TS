@@ -554,17 +554,41 @@ export class ZonEncoder {
       return val ? "T" : "F";
     }
     if (typeof val === 'number') {
-      // Preserve exact numeric representation
-      if (!Number.isInteger(val)) {
-        let s = String(val);
-        // Ensure decimal point for whole number floats
-        if (!/[\.e]/i.test(s)) {
-          s += '.0';
-        }
-        return s;
-      } else {
+      // Handle special values
+      if (!Number.isFinite(val)) {
+        return "null";  // NaN, Infinity, -Infinity → null
+      }
+      
+      // Canonical number formatting - avoid scientific notation
+      if (Number.isInteger(val)) {
         return String(val);
       }
+      
+      // For floats, format without trailing zeros
+      let s = String(val);
+      
+      // Check if it's in scientific notation
+      if (s.includes('e') || s.includes('E')) {
+        // Convert to fixed-point notation
+        const parts = s.split(/[eE]/);
+        const mantissa = parseFloat(parts[0]);
+        const exponent = parseInt(parts[1], 10);
+        
+        if (exponent >= 0) {
+          // Positive exponent - multiply
+          s = (mantissa * Math.pow(10, exponent)).toString();
+        } else {
+          // Negative exponent - use toFixed
+          s = mantissa.toFixed(Math.abs(exponent));
+        }
+      }
+      
+      // Ensure decimal point for floats
+      if (!s.includes('.')) {
+        s += '.0';
+      }
+      
+      return s;
     }
 
     if (Array.isArray(val) || (typeof val === 'object' && val !== null)) {

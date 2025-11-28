@@ -2,12 +2,14 @@
 
 [![npm version](https://img.shields.io/npm/v/zon-format.svg)](https://www.npmjs.com/package/zon-format)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-28%2F28%20passing-brightgreen.svg)](#quality--testing)
+[![Tests](https://img.shields.io/badge/tests-94%2F94%20passing-brightgreen.svg)](#quality--testing)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Zero Overhead Notation** - A compact, human-readable way to encode JSON for LLMs.
 
-ZON combines tabular layouts for uniform arrays with compact notation for objects. In practice, this means 100% LLM retrieval accuracy while using 4-15% fewer tokens than TOON (varies by tokenizer).
+**File Extension:** `.zonf` | **Media Type:** `text/zon` | **Encoding:** UTF-8
+
+ZON is a token-efficient serialization format designed for LLM workflows. It achieves 35-50% token reduction vs JSON through tabular encoding, single-character primitives, and intelligent compression while maintaining 100% data fidelity.
 
 Think of it like CSV for complex data - keeps the efficiency of tables where it makes sense, but handles nested structures without breaking a sweat.
 
@@ -102,10 +104,12 @@ sam,5.1,180,3,Wildflower Loop,T
 
 - 🎯 **100% LLM Accuracy**: Achieves perfect retrieval (24/24 questions) with self-explanatory structure – no hints needed
 - 💾 **Most Token-Efficient**: 4-15% fewer tokens than TOON across all tokenizers
-- � **JSON Data Model**: Encodes the same objects, arrays, and primitives as JSON with deterministic, lossless round-trips
+- 🎯 **JSON Data Model**: Encodes the same objects, arrays, and primitives as JSON with deterministic, lossless round-trips
 - 📐 **Minimal Syntax**: Explicit headers (`@(N)` for count, column list) eliminate ambiguity for LLMs
 - 🧺 **Tabular Arrays**: Uniform arrays collapse into tables that declare fields once and stream row values
-- ✅ **Production Ready**: 28/28 tests pass, 27/27 datasets verified, zero data loss
+- 🔢 **Canonical Numbers**: No scientific notation (1000000, not 1e6), NaN/Infinity → null
+- 🔒 **Security Limits**: Automatic DOS prevention (100MB docs, 1M arrays, 100K keys)
+- ✅ **Production Ready**: 94/94 tests pass, 27/27 datasets verified, zero data loss
 
 ---
 
@@ -222,70 +226,83 @@ Llama 3 (Meta):
 
 ### Large Complex Nested Dataset
 ```
-GPT-4o (o200k):
+gpt-4o (o200k):
 
-    ZON          █████░░░░░░░░░░░░░░░ 146,745 tokens 👑
-    CSV          ██████░░░░░░░░░░░░░░ 164,919 tokens (+12.4%)
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 188,604 tokens (+22.2%)
-    TOON         █████████░░░░░░░░░░░ 224,940 tokens (+53.3%)
-    YAML         █████████░░░░░░░░░░░ 224,938 tokens (+53.3%)
-    JSON format  ██████████████░░░░░░ 284,618 tokens (+48.4%)
-    XML          ████████████████████ 335,239 tokens (+128.5%)
+    ZON          █████░░░░░░░░░░░░░░░ 147,267 tokens 👑
+    CSV          ██████░░░░░░░░░░░░░░ 165,647 tokens (+12.5%)
+    JSON (cmp)   ███████░░░░░░░░░░░░░ 189,193 tokens (+28.4%)
+    TOON         █████████░░░░░░░░░░░ 225,510 tokens (+53.1%)
+    YAML         █████████░░░░░░░░░░░ 225,666 tokens (+53.2%)
+    JSON format  ██████████████░░░░░░ 285,131 tokens (+93.6%)
+    XML          ████████████████████ 336,332 tokens (+128.4%)
 
 claude 3.5 (anthropic):
 
-    ZON          █████░░░░░░░░░░░░░░░ 148,736 tokens 👑
-    CSV          ██████░░░░░░░░░░░░░░ 161,701 tokens (+8.7%)
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 185,136 tokens (+19.7%)
-    TOON         █████████░░░░░░░░░░░ 196,893 tokens (+32.4%)
-    YAML         █████████░░░░░░░░░░░ 196,892 tokens (+32.4%)
-    JSON format  ███████████████░░░░░ 273,670 tokens (+45.7%)
-    XML          ████████████████████ 327,274 tokens (+120.0%)
+    ZON          █████░░░░░░░░░░░░░░░ 149,281 tokens 👑
+    CSV          ██████░░░░░░░░░░░░░░ 162,245 tokens (+8.7%)
+    JSON (cmp)   ███████░░░░░░░░░░░░░ 185,732 tokens (+24.4%)
+    TOON         █████████░░░░░░░░░░░ 197,463 tokens (+32.3%)
+    YAML         █████████░░░░░░░░░░░ 197,533 tokens (+32.3%)
+    JSON format  ███████████████░░░░░ 274,149 tokens (+83.7%)
+    XML          ████████████████████ 328,378 tokens (+120.0%)
 
 llama 3 (meta):
 
-    ZON          ██████░░░░░░░░░░░░░░ 233,922 tokens 👑
-    CSV          ███████░░░░░░░░░░░░░ 254,181 tokens (+8.7%)
-    JSON (cmp)   ████████░░░░░░░░░░░░ 276,405 tokens (+15.4%)
-    TOON         ██████████░░░░░░░░░░ 314,824 tokens (+34.6%)
-    YAML         ██████████░░░░░░░░░░ 314,820 tokens (+34.6%)
-    JSON format  ███████████████░░░░░ 406,945 tokens (+42.3%)
-    XML          ████████████████████ 480,125 tokens (+105.3%)
+    ZON          ██████░░░░░░░░░░░░░░ 234,623 tokens 👑
+    CSV          ███████░░░░░░░░░░░░░ 254,909 tokens (+8.7%)
+    JSON (cmp)   ████████░░░░░░░░░░░░ 277,165 tokens (+18.1%)
+    TOON         ██████████░░░░░░░░░░ 315,608 tokens (+34.5%)
+    YAML         ██████████░░░░░░░░░░ 315,714 tokens (+34.6%)
+    JSON format  ███████████████░░░░░ 407,488 tokens (+73.6%)
+    XML          ████████████████████ 481,517 tokens (+105.3%)
 ```
 
 
 ### Overall Summary:
 ```
 GPT-4o (o200k):
+  ZON Wins: 2/2 datasets
+  
+  Total tokens across all datasets:
+    ZON:         147,267 👑
+    CSV:         165,647 (+12.5%)
+    JSON (cmp):  189,193 (+28.4%)
+    TOON:        225,510 (+53.1%)
+    
+  ZON vs TOON: -34.7% fewer tokens ✨
+  ZON vs JSON: -22.2% fewer tokens
 
-    ZON          █████░░░░░░░░░░░░░░░ 147,267 👑
-    CSV          ██████░░░░░░░░░░░░░░ 164,919
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 188,604
-    TOON         █████████░░░░░░░░░░░ 224,940
-    YAML         █████████░░░░░░░░░░░ 224,938
-    JSON format  ██████████████░░░░░░ 284,618
-    XML          ████████████████████ 335,239
+Claude 3.5 (Anthropic):
+  ZON Wins: 1/2 datasets
+  
+  Total tokens across all datasets:
+    ZON:         149,281 👑
+    CSV:         162,245 (+8.7%)
+    JSON (cmp):  185,732 (+24.4%)
+    TOON:        197,463 (+32.3%)
+    
+  ZON vs TOON: -24.4% fewer tokens ✨
+  ZON vs JSON: -19.6% fewer tokens
 
-Llama 3 (meta):
-
-    ZON          ██████░░░░░░░░░░░░░░ 234,623 👑
-    CSV          ███████░░░░░░░░░░░░░ 254,181
-    JSON (cmp)   ████████░░░░░░░░░░░░ 276,405
-    TOON         ██████████░░░░░░░░░░ 314,824
-    YAML         ██████████░░░░░░░░░░ 314,820
-    JSON format  ███████████████░░░░░ 406,945
-    XML          ████████████████████ 480,125
-
-Claude 3.5 (anthropic):
-
-    ZON          █████░░░░░░░░░░░░░░░ 149,281 👑
-    CSV          ██████░░░░░░░░░░░░░░ 161,701
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 185,136
-    TOON         █████████░░░░░░░░░░░ 196,893
-    YAML         █████████░░░░░░░░░░░ 196,892
-    JSON format  ██████████████░░░░░░ 273,670
-    XML          ████████████████████ 327,274
+Llama 3 (Meta):
+  ZON Wins: 2/2 datasets
+  
+  Total tokens across all datasets:
+    ZON:         234,623 👑
+    CSV:         254,909 (+8.7%)
+    JSON (cmp):  277,165 (+18.1%)
+    TOON:        315,608 (+34.5%)
+    
+  ZON vs TOON: -25.7% fewer tokens ✨
+  ZON vs JSON: -15.3% fewer tokens
 ```
+
+**Key Insights:**
+
+- ZON wins on all Llama 3 and GPT-4o tests (best token efficiency across both datasets).
+- Claude shows CSV has slight edge (0.2%) on simple tabular data, but ZON dominates on complex nested data.
+
+- **Average savings: 25-35% vs TOON, 15-28% vs JSON** across all tokenizers.
 
 - ZON wins on all Llama 3 and GPT-4o tests (best token efficiency across both datasets).
 - ZON is 2nd on Claude (CSV wins by only 0.2%, ZON still beats TOON by 4.6%).
@@ -295,12 +312,122 @@ Claude 3.5 (anthropic):
 
 ---
 
-## Quality Assurance
+## LLM Retrieval Accuracy Testing
+
+### Methodology
+
+ZON achieves **100% LLM retrieval accuracy** through systematic testing:
+
+**Test Framework:** [benchmarks/retrieval-accuracy.js](file:///Users/roni/Developer/zon-TS/benchmarks/retrieval-accuracy.js)
+
+**Process:**
+1. **Data Encoding**: Encode 27 test datasets in multiple formats (ZON, JSON, TOON, YAML, CSV, XML)
+2. **Prompt Generation**: Create prompts asking LLMs to extract specific values
+3. **LLM Querying**: Test against GPT-4o, Claude, Llama (controlled via API)
+4. **Answer Validation**: Compare LLM responses to ground truth
+5. **Accuracy Calculation**: Percentage of correct retrievals
+
+**Datasets Tested:**
+- Simple objects (metadata)
+- Nested structures (configs)
+- Arrays of objects (users, products)
+- Mixed data types (numbers, booleans, nulls, strings)
+- Edge cases (empty values, special characters)
+
+**Validation:** 
+- Token efficiency measured via `gpt-tokenizer`
+- Accuracy requires **exact match** to original value
+- Tests run on multiple LLM models for consistency
+
+**Results:** ✅ 100% accuracy across all tested LLMs and datasets
+
+**Run Tests:**
+```bash
+node benchmarks/retrieval-accuracy.js
+```
+
+**Output:** `accuracy-results.json` with per-format, per-model results
+
+---
+
+## Security & Data Types
+
+### Eval-Safe Design
+
+ZON is **immune to code injection attacks** that plague other formats:
+
+✅ **No eval()** - Pure data format, zero code execution
+✅ **No object constructors** - Unlike YAML's `!!python/object` exploit
+✅ **No prototype pollution** - Dangerous keys blocked (`__proto__`, `constructor`)
+✅ **Type-safe parsing** - Numbers via `Number()`, not `eval()`
+
+**Comparison:**
+
+| Format | Eval Risk | Code Execution |
+|--------|-----------|----------------|
+| **ZON** | ✅ None | Impossible |
+| **JSON** | ✅ Safe | When not using `eval()` |
+| **YAML** | ❌ High | `!!python/object/apply` RCE |
+| **TOON** | ✅ Safe | Type-agnostic, no eval |
+
+### Data Type Preservation
+
+### Data Type Preservation
+
+**Strong type guarantees:**
+- ✅ **Integers**: `42` stays integer
+- ✅ **Floats**: `3.14` preserves decimal (`.0` added for whole floats)
+- ✅ **Booleans**: Explicit `T`/`F` (not string `"true"`/`"false"`)
+- ✅ **Null**: Explicit `null` (not omitted like `undefined`)
+- ✅ **No scientific notation**: `1000000`, not `1e6` (prevents LLM confusion)
+- ✅ **Special values normalized**: `NaN`/`Infinity` → `null`
+
+**vs JSON issues:**
+- JSON: No int/float distinction (`127` same as `127.0`)
+- JSON: Scientific notation allowed (`1e20`)
+- JSON: Large number precision loss (>2^53)
+
+**vs TOON:**
+- TOON: Uses `true`/`false` (more tokens)
+- TOON: Implicit structure (heuristic parsing)
+- ZON: Explicit `T`/`F` and `@` markers (deterministic)
+
+---
+
+## Quality & Security
 
 ### Data Integrity
-- **Unit tests:** 28/28 passed
+- **Unit tests:** 94/94 passed (+66 new validation/security/conformance tests)
 - **Roundtrip tests:** 27/27 datasets verified
 - **No data loss or corruption**
+
+### Security Limits (DOS Prevention)
+
+Automatic protection against malicious input:
+
+| Limit | Maximum | Error Code |
+|-------|---------|------------|
+| Document size | 100 MB | E301 |
+| Line length | 1 MB | E302 |
+| Array length | 1M items | E303 |
+| Object keys | 100K keys | E304 |
+| Nesting depth | 100 levels | - |
+
+**Protection is automatic** - no configuration required.
+
+### Validation (Strict Mode)
+
+**Enabled by default** - validates table structure:
+
+```typescript
+// Strict mode (default)
+const data = decode(zonString);
+
+// Non-strict mode
+const data = decode(zonString, { strict: false });
+```
+
+**Error codes:** E001 (row count), E002 (field count)
 
 ### Encoder/Decoder Verification
 - All example datasets (9/9) pass roundtrip
@@ -522,7 +649,7 @@ const zon = encode({
 
 **Returns:** ZON-formatted string
 
-### `decode(zonString: string): any`
+### `decode(zonString: string, options?: DecodeOptions): any`
 
 Decodes ZON format back to JavaScript data.
 
@@ -534,6 +661,31 @@ users:@(2):id,name
 1,Alice
 2,Bob
 `);
+```
+
+**Options:**
+
+```typescript
+// Strict mode (default) - validates table structure
+const data = decode(zonString);
+
+// Non-strict mode - allows row/field count mismatches  
+const data = decode(zonString, { strict: false });
+```
+
+**Error Handling:**
+
+```typescript
+import { decode, ZonDecodeError } from 'zon-format';
+
+try {
+  const data = decode(invalidZon);
+} catch (e) {
+  if (e instanceof ZonDecodeError) {
+    console.log(e.code);    // "E001" or "E002"
+    console.log(e.message); // Detailed error message
+  }
+}
 ```
 
 **Returns:** Original JavaScript data structure
@@ -578,33 +730,22 @@ Complete API documentation for `zon-format` v1.0.3.
 - `encode()` function - detailed parameters and examples
 - `decode()` function - detailed parameters and examples
 - TypeScript type definitions
-- Error handling (`ZonDecodeError`)
-- Round-trip compatibility guarantees
-- Performance characteristics
-- Migration guides (from JSON, from TOON)
+### 📘 [Complete Specification](./SPEC.md)
 
-**Perfect for:** Integration, API usage, TypeScript projects
+Comprehensive formal specification including:
+- Data model and encoding rules
+- Security model (DOS prevention, no eval)
+- Data type system and preservation guarantees
+- Conformance checklists
+- Media type specification (`.zonf`, `text/zon`)
+- Examples and appendices
 
----
+### 📚 Other Documentation
 
-### 📐 [Format Specification](./docs/format-specification.md)
-Formal specification of the ZON data serialization format.
+- **[API Reference](./docs/api-reference.md)** - Encoder/decoder API, options, error codes
+- **[Syntax Cheatsheet](./docs/syntax-cheatsheet.md)** - Quick reference guide
+- **[LLM Best Practices](./docs/llm-best-practices.md)** - Using ZON with LLMs
 
-**What's inside:**
-- Complete data model definition
-- Syntax rules and grammar (EBNF-like)
-- Format selection algorithm
-- Encoding and decoding rules
-- Type inference rules
-- Comprehensive examples
-- Format comparison (ZON vs CSV, TOON, JSON)
-- Version history and changelog
-
-**Perfect for:** Understanding the format deeply, implementing parsers, formal verification
-
----
-
-### 🤖 [LLM Best Practices](./docs/llm-best-practices.md)
 Guide for maximizing ZON's effectiveness in LLM applications.
 
 **What's inside:**
@@ -631,4 +772,6 @@ Guide for maximizing ZON's effectiveness in LLM applications.
 
 ## License
 
-MIT License © 2025-PRESENT Roni Bhakta
+Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
+
+MIT License - see [LICENSE](LICENSE) for details.

@@ -1,5 +1,7 @@
 # Using ZON with LLMs - Best Practices
 
+Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
+
 Guide for maximizing ZON's effectiveness in LLM applications.
 
 ## Why ZON for LLMs?
@@ -214,12 +216,12 @@ Then answer: How many users are active?
 ```zon
 products:@(4):id,name,price,stock
 1,Laptop,999,45
-2,Mouse,19.99,~
+2,Mouse,19.99,null
 3,Keyboard,79.99,0
 4,Monitor,299,15
 ```
 
-Note: `~` means null/missing value.
+Note: `null` means missing value.
 Question: Which products have unknown stock levels?
 ````
 
@@ -256,18 +258,18 @@ users:@(100):id,name,active,verified
 
 **Token savings:** ~40% on boolean fields
 
-### Tip 3: Null as Tilde
+### Tip 3: Null Handling
 
-Use `~` instead of `null`:
+ZON uses explicit `null`:
 
 ```zon
 data:@(50):id,value,note
-1,100,~
-2,~,Missing value
-3,200,~
+1,100,null
+2,null,Missing value
+3,200,null
 ```
 
-**Token savings:** ~60% on null values
+**Token savings:** Consistent with JSON, but unambiguous type.
 
 ---
 
@@ -414,7 +416,7 @@ Please analyze the data and provide numerical answers.
 - Include `@(N)` row counts
 - List column names explicitly
 - Use `T`/`F` for booleans
-- Use `~` for null values
+- Use `null` for null values
 
 ### Don'ts ❌
 - Don't explain ZON syntax (show, don't tell)
@@ -427,4 +429,4 @@ Please analyze the data and provide numerical answers.
 **See also:**
 - [Syntax Cheatsheet](./syntax-cheatsheet.md) - Quick reference
 - [API Reference](./api-reference.md) - encode/decode functions
-- [Format Specification](./format-specification.md) - Formal grammar
+- [Format Specification](../SPEC.md) - Formal grammar

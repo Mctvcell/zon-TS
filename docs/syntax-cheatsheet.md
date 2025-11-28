@@ -1,5 +1,7 @@
 # ZON Syntax Cheatsheet
 
+Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
+
 Quick reference for ZON format syntax. Cross-referenced with actual implementation in v1.0.3.
 
 ## Basic Types
@@ -19,7 +21,7 @@ active:T
 disabled:F
 
 # Null
-value:~
+value:null
 ```
 
 ### Objects
@@ -178,7 +180,7 @@ users:@(2):id,name,active
 |-----|------|-------|
 | `T` | `true` | Boolean true |
 | `F` | `false` | Boolean false |
-| `~` | `null` | Null value |
+| `null` | `null` | Null value |
 | `42` | `42` | Number (integer) |
 | `3.14` | `3.14` | Number (float) |  
 | `hello` | `"hello"` | Unquoted string |
@@ -297,7 +299,7 @@ Question: How many active users are there?
 | **Uniform arrays** | Verbose | Tabular | Tabular |
 | **Nested objects** | Native | Quoted | Quoted |
 | **Booleans** | `true`/`false` | `true`/`false` | `T`/`F` |
-| **Null** | `null` | `null` | `~` |
+| **Null** | `null` | `null` | `null` |
 | **Headers** | No | `[N]{fields}` | `@(N):fields` |
 | **LLM accuracy** | 91.7% | 100% | **100%** ✅ |
 | **Tokens (unified)** | 28,042 | 20,988 | **19,995** 👑 |
@@ -305,6 +307,6 @@ Question: How many active users are there?
 ---
 
 **See also:**
-- [Format Specification](./format-specification.md) - Formal grammar
+- [Format Specification](../SPEC.md) - Formal grammar
 - [API Reference](./api-reference.md) - encode/decode functions
 - [LLM Best Practices](./llm-best-practices.md) - Usage guide

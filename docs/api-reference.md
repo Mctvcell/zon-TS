@@ -1,5 +1,7 @@
 # ZON API Reference
 
+Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
+
 Complete API documentation for `zon-format` v1.0.3.
 
 ## Installation
@@ -49,40 +51,59 @@ F,2,Bob
 - ✅ Strings
 - ✅ Numbers (integers, floats)
 - ✅ Booleans (`T`/`F`)
-- ✅ Null (`~`)
+- ✅ Null (`null`)
 
 **Encoding Behavior:**
 - **Uniform arrays** → Table format (`@(N):columns`)
 - **Nested objects** → Quoted notation (`"{key:value}"`)
 - **Primitive arrays** → Inline format (`"[a,b,c]"`)
 - **Booleans** → `T`/`F` (single character)
-- **Null** → `~` (tilde)
+- **Null** → `null`
 
 ---
 
 ## Decoding Functions
 
-### `decode(input: string): any`
+### `decode(zonString: string, options?: DecodeOptions): any`
 
-Decodes ZON format back to JavaScript data.
+Decodes a ZON format string back to the original JavaScript data structure.
 
-**Parameters:**
-- `input` (`string`) - ZON-formatted string
+### Parameters
 
-**Returns:** `any` - Original JavaScript data structure
+- **`zonString`** (`string`): The ZON-formatted string to decode
+- **`options`** (`DecodeOptions`, optional): Decoding options
+  - **`strict`** (`boolean`, default: `true`): Enable strict validation
 
-**Example:**
+### Strict Mode
+
+**Enabled by default** - Validates table structure during decoding.
+
+**Error Codes:**
+- `E001`: Row count mismatch (expected vs actual rows)
+- `E002`: Field count mismatch (expected vs actual fields)
+
+**Examples:**
+
 ```typescript
 import { decode } from 'zon-format';
 
-const zonString = `
-users:@(2):active,id,name
-T,1,Alice
-F,2,Bob
+// Strict mode (default) - throws on validation errors
+const zonData = `
+users:@(2):id,name
+1,Alice
 `;
 
-const data = decode(zonString);
-console.log(data);
+try {
+  const data = decode(zonData);
+} catch (e) {
+  console.log(e.code);    // "E001"
+  console.log(e.message); // "[E001] Row count mismatch..."
+  console.log(e.context); // "Table: users"
+}
+
+// Non-strict mode - allows mismatches
+const data = decode(zonData, { strict: false });
+// Successfully decodes with 1 row instead of declared 2
 ```
 
 **Output:**
@@ -119,21 +140,53 @@ interface JsonArray extends Array<JsonValue> {}
 
 ## Error Handling
 
-### ZonDecodeError
+### `ZonDecodeError`
 
-Thrown when decoding invalid ZON format.
+Thrown when decoding fails or strict mode validation errors occur.
+
+**Properties:**
+- `message` (`string`): Error description
+- `code` (`string`, optional): Error code (e.g., "E001", "E002")
+- `line` (`number`, optional): Line number where error occurred
+- `column` (`number`, optional): Column position
+- `context` (`string`, optional): Relevant context snippet
 
 **Example:**
+
 ```typescript
 import { decode, ZonDecodeError } from 'zon-format';
 
 try {
-  const data = decode(invalidZonString);
-} catch (error) {
-  if (error instanceof ZonDecodeError) {
-    console.error('Invalid ZON format:', error.message);
+  const data = decode(invalidZon);
+} catch (e) {
+  if (e instanceof ZonDecodeError) {
+    console.log(e.code);     // "E001"
+    console.log(e.line);     // 5
+    console.log(e.context);  // "Table: users"
+    console.log(e.toString()); // "[E001] Row count mismatch... (line 5)"
   }
 }
+```
+
+### Common Error Codes
+
+| Code | Description | Example |
+|------|-------------|----------|
+| `E001` | Row count mismatch | Declared `@(3)` but only 2 rows provided |
+| `E002` | Field count mismatch | Declared 3 columns but row has 2 values |
+| `E301` | Document size exceeds 100MB | Prevents memory exhaustion |
+| `E302` | Line length exceeds 1MB | Prevents buffer overflow |
+| `E303` | Array length exceeds 1M items | Prevents excessive iteration |
+| `E304` | Object key count exceeds 100K | Prevents hash collision |
+
+**Security Limits:**
+
+All security limits (E301-E304) are automatically enforced to prevent DOS attacks. No configuration needed.
+
+**Disable strict mode** to allow row/field count mismatches (E001-E002):
+
+```typescript
+const data = decode(zonString, { strict: false });
 ```
 
 ---
@@ -343,7 +396,7 @@ const toonString = encodeToon(data); // TOON format
 ## See Also
 
 - [Syntax Cheatsheet](./syntax-cheatsheet.md) - Quick reference
-- [Format Specification](./format-specification.md) - Formal grammar
+- [Format Specification](../SPEC.md) - Formal grammar
 - [LLM Best Practices](./llm-best-practices.md) - Usage guide
 - [GitHub Repository](https://github.com/ZON-Format/zon-TS)
 - [NPM Package](https://www.npmjs.com/package/zon-format)

@@ -6,8 +6,12 @@
  * - v1.x: Legacy format (@tablename(count):) for backward compatibility
  */
 
-import { TABLE_MARKER, META_SEPARATOR } from './constants';
+import { TABLE_MARKER, META_SEPARATOR, MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS, MAX_NESTING_DEPTH } from './constants';
 import { ZonDecodeError } from './exceptions';
+
+export interface DecodeOptions {
+  strict?: boolean;  // Default: true
+}
 
 interface TableInfo {
   cols: string[];
@@ -19,12 +23,28 @@ interface TableInfo {
 }
 
 export class ZonDecoder {
+  private strict: boolean;
+  private currentLine: number;
+
+  constructor(options: DecodeOptions = {}) {
+    this.strict = options.strict ?? true;
+    this.currentLine = 0;
+  }
+
   /**
    * Decode ZON v1.0.2 ClearText format to original data structure.
    */
   decode(zonStr: string): any {
     if (!zonStr) {
       return {};
+    }
+
+    // Security: Check document size
+    if (zonStr.length > MAX_DOCUMENT_SIZE) {
+      throw new ZonDecodeError(
+        `[E301] Document size exceeds maximum (${MAX_DOCUMENT_SIZE} bytes)`,
+        { code: 'E301' }
+      );
     }
 
     const lines = zonStr.trim().split('\n');
@@ -47,7 +67,15 @@ export class ZonDecoder {
     for (const line of lines) {
       const trimmedLine = line.trimEnd();
 
-      // Skip blank lines
+      // Security: Check line length
+      if (trimmedLine.length > MAX_LINE_LENGTH) {
+        throw new ZonDecodeError(
+          `[E302] Line length exceeds maximum (${MAX_LINE_LENGTH} chars)`,
+          { code: 'E302', line: this.currentLine }
+        );
+      }
+
+      // Skip blank lines  
       if (!trimmedLine) {
         continue;
       }
@@ -95,6 +123,14 @@ export class ZonDecoder {
 
     // Recombine tables into metadata
     for (const [tableName, table] of Object.entries(tables)) {
+      // Strict mode: validate row count
+      if (this.strict && table.rows.length !== table.expected_rows) {
+        throw new ZonDecodeError(
+          `[E001] Row count mismatch in table '${tableName}': expected ${table.expected_rows}, got ${table.rows.length}`,
+          { code: 'E001', context: `Table: ${tableName}` }
+        );
+      }
+      
       metadata[tableName] = this._reconstructTable(table);
     }
 
@@ -234,6 +270,32 @@ export class ZonDecoder {
    */
   private _parseTableRow(line: string, table: TableInfo): Record<string, any> {
     const tokens = this._parseCSVLine(line);
+
+    // Strict mode: validate field count (before padding)
+    const coreFieldCount = tokens.length;
+    let sparseFieldCount = 0;
+    
+    // Count sparse fields (key:value after core fields)
+    for (let i = table.cols.length; i < tokens.length; i++) {
+      const tok = tokens[i];
+      if (tok.includes(':') && !this._isURL(tok) && !this._isTimestamp(tok)) {
+        sparseFieldCount++;
+      }
+    }
+    
+    const actualCoreFields = Math.min(coreFieldCount, table.cols.length);
+    
+    // In strict mode, core fields must match column count (unless we have sparse fields)
+    if (this.strict && coreFieldCount < table.cols.length && sparseFieldCount === 0) {
+      throw new ZonDecodeError(
+        `[E002] Field count mismatch on row ${table.row_index + 1}: expected ${table.cols.length} fields, got ${coreFieldCount}`,
+        { 
+          code: 'E002',
+          line: this.currentLine,
+          context: line.substring(0, 50) + (line.length > 50 ? '...' : '')
+        }
+      );
+    }
 
     // Pad if needed
     while (tokens.length < table.cols.length) {
@@ -376,6 +438,14 @@ export class ZonDecoder {
       // Split by comma, respecting nesting
       const pairs = this._splitByDelimiter(content, ',');
 
+      // Security: Check object key count
+      if (pairs.length > MAX_OBJECT_KEYS) {
+        throw new ZonDecodeError(
+          `[E304] Object key count exceeds maximum (${MAX_OBJECT_KEYS} keys)`,
+          { code: 'E304' }
+        );
+      }
+
       for (const pair of pairs) {
         if (!pair.includes(':')) {
           continue;
@@ -406,6 +476,15 @@ export class ZonDecoder {
       }
 
       const items = this._splitByDelimiter(content, ',');
+      
+      // Security: Check array length
+      if (items.length > MAX_ARRAY_LENGTH) {
+        throw new ZonDecodeError(
+          `[E303] Array length exceeds maximum (${MAX_ARRAY_LENGTH} items)`,
+          { code: 'E303' }
+        );
+      }
+      
       return items.map(item => this._parseZonNode(item, depth + 1));
     }
 
@@ -697,7 +776,9 @@ export class ZonDecoder {
 
 /**
  * Convenience function to decode ZON v1.0.2 format to original data.
+ * @param data - ZON format string
+ * @param options - Decode options (strict mode, etc.)
  */
-export function decode(data: string): any {
-  return new ZonDecoder().decode(data);
+export function decode(data: string, options?: DecodeOptions): any {
+  return new ZonDecoder(options).decode(data);
 }
