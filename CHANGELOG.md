@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-11-29
+
+### Fixed
+- **Critical Data Integrity**: Fixed roundtrip failures for strings containing newlines, empty strings, and escaped characters.
+- **Decoder Logic**: Fixed `_splitByDelimiter` to correctly handle nested arrays and objects within table cells (e.g., `[10, 20]`).
+- **Encoder Logic**: Added mandatory quoting for empty strings and strings with newlines to prevent data loss.
+
+### Documentation
+- Updated `SPEC.md` and `syntax-cheatsheet.md` to explicitly require quoting for empty strings and escape sequences.
+
 ## [1.0.3] - 2025-11-28
 
 ### 🎯 100% LLM Retrieval Accuracy Achieved

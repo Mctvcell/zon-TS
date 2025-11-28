@@ -307,7 +307,7 @@ export class ZonEncoder {
   /**
    * Detect sequential columns (1, 2, 3, ..., N) for omission.
    * 
-   * NOTE: Disabled in v1.0.3 to improve LLM retrieval accuracy.
+   * NOTE: Disabled in v1.0.4 to improve LLM retrieval accuracy.
    * Implicit columns like [id] were being missed by LLMs.
    * Now all columns are explicit.
    */
@@ -548,7 +548,7 @@ export class ZonEncoder {
 
   /**
    * Format a value with minimal quoting.
-   * v1.0.3 Optimization: Smart date detection and relaxed string quoting
+   * v1.0.4 Optimization: Smart date detection and relaxed string quoting
    */
   private _formatValue(val: any): string {
     if (val === null) {
@@ -608,7 +608,7 @@ export class ZonEncoder {
     return this._formatZonNode(val);
   }
 
-    // String formatting with v1.0.3 optimizations
+    // String formatting with v1.0.4 optimizations
     const s = String(val);
 
     // CRITICAL FIX: Always JSON-stringify strings with newlines to prevent line breaks in ZON
@@ -662,7 +662,7 @@ export class ZonEncoder {
 
   /**
    * Determine if string needs type protection (quoting to preserve as string).
-   * v1.0.3: More precise - only protect actual numbers, not complex patterns.
+   * v1.0.4: More precise - only protect actual numbers, not complex patterns.
    */
   private _needsTypeProtection(s: string): boolean {
     const sLower = s.toLowerCase();
@@ -706,7 +706,7 @@ export class ZonEncoder {
     // Examples that should NOT be quoted:
     // - "192.168.1.1" (IP address - dots distinguish from number)
     // - "u123" (alphanumeric ID - letter prefix)
-    // - "v1.0.3" (version string)
+    // - "v1.0.4" (version string)
     // - "2025-01-01" (date - handled by _isISODate above)
     
     // If it starts/ends with digit but has non-numeric chars, check carefully

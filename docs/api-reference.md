@@ -2,7 +2,7 @@
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
-Complete API documentation for `zon-format` v1.0.3.
+Complete API documentation for `zon-format` v1.0.4.
 
 ## Installation
 
@@ -198,7 +198,7 @@ const data = decode(zonString, { strict: false });
 ```typescript
 const data = {
   name: "ZON Format",
-  version: "1.0.3",
+  version: "1.0.4",
   active: true,
   score: 98.5
 };
@@ -207,10 +207,10 @@ const encoded = encode(data);
 // active:T
 // name:ZON Format
 // score:98.5
-// version:"1.0.3"
+// version:"1.0.4"
 
 const decoded = decode(encoded);
-// { name: "ZON Format", version: "1.0.3", active: true, score: 98.5 }
+// { name: "ZON Format", version: "1.0.4", active: true, score: 98.5 }
 ```
 
 ### Example 2: Uniform Table

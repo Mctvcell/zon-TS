@@ -2,7 +2,7 @@
 
 ## Zero Overhead Notation - Formal Specification
 
-**Version:** 1.0.3
+**Version:** 1.0.4
 
 **Date:** 2025-11-28
 
@@ -20,7 +20,7 @@ Zero Overhead Notation (ZON) is a compact, line-oriented text format that encode
 
 ## Status of This Document
 
-This document is a **Stable Release v1.0.3** and defines normative behavior for ZON encoders, decoders, and validators. Implementation feedback should be reported at https://github.com/ZON-Format/zon-TS.
+This document is a **Stable Release v1.0.4** and defines normative behavior for ZON encoders, decoders, and validators. Implementation feedback should be reported at https://github.com/ZON-Format/zon-TS.
 
 Backward compatibility is maintained across v1.0.x releases. Major versions (v2.x) may introduce breaking changes.
 
@@ -403,7 +403,7 @@ Pattern: `^[a-zA-Z0-9_\-\.]+$`
 ```zon
 name:Alice
 user_id:u123
-version:v1.0.3
+version:v1.0.4
 api-key:sk_test_key
 ```
 
@@ -978,7 +978,7 @@ users:@(1):id,name
 
 ### Appendix C: Changelog
 
-**v1.0.3 (2025-11-28)**
+**v1.0.4 (2025-11-29)**
 - Disabled sequential column omission
 - 100% LLM accuracy achieved
 - All columns explicit

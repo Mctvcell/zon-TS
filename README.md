@@ -621,7 +621,7 @@ config:"{database:{host:db.example.com,port:5432},features:{darkMode:T}}"
 ZON intelligently combines formats:
 
 ```
-metadata:"{version:1.0.3,env:production}"
+metadata:"{version:1.0.4,env:production}"
 users:@(5):id,name,active
 1,Alice,T
 2,Bob,F
@@ -725,7 +725,7 @@ Quick reference for ZON format syntax with practical examples.
 ---
 
 ### 🔧 [API Reference](./docs/api-reference.md)
-Complete API documentation for `zon-format` v1.0.3.
+Complete API documentation for `zon-format` v1.0.4.
 
 **What's inside:**
 - `encode()` function - detailed parameters and examples
