@@ -1,8 +1,9 @@
 /**
- * ZON Decoder v1.0.2 - ClearText Format
+ * ZON Decoder v2.0.0 - Compact Hybrid Format
  *
- * This decoder parses clean, document-style ZON with YAML-like metadata
- * and CSV-like tables using @table syntax.
+ * Supports both v1.x and v2.0.0 formats:
+ * - v2.0: Compact headers (@count:), sequential ID reconstruction, sparse tables
+ * - v1.x: Legacy format (@tablename(count):) for backward compatibility
  */
 
 import { TABLE_MARKER, META_SEPARATOR } from './constants';
@@ -10,6 +11,7 @@ import { ZonDecodeError } from './exceptions';
 
 interface TableInfo {
   cols: string[];
+  omittedCols?: string[];  // v2.0: Sequential columns to reconstruct
   rows: Record<string, any>[];
   prev_vals: Record<string, any>;
   row_index: number;
@@ -50,7 +52,7 @@ export class ZonDecoder {
         continue;
       }
 
-      // Table header: @hikes(2): id, name, sunny
+      // Table header (Anonymous or Legacy): @...
       if (trimmedLine.startsWith(TABLE_MARKER)) {
         const [tableName, tableInfo] = this._parseTableHeader(trimmedLine);
         currentTableName = tableName;
@@ -67,13 +69,27 @@ export class ZonDecoder {
           currentTable = null;
         }
       }
-      // Metadata line: key: value
+      // Metadata line OR Named Table (v2.1): key: @...
       else if (trimmedLine.includes(META_SEPARATOR)) {
-        currentTable = null;  // Exit table mode (safety)
         const sepIndex = trimmedLine.indexOf(META_SEPARATOR);
         const key = trimmedLine.substring(0, sepIndex).trim();
         const val = trimmedLine.substring(sepIndex + 1).trim();
-        metadata[key] = this._parseValue(val);
+        
+        // Check if it's a named table start: users: @(5)...
+        if (val.startsWith(TABLE_MARKER)) {
+          // Parse header from value part
+          // We pass the value part (e.g. "@(5):col1,col2") to _parseTableHeader
+          // But _parseTableHeader expects the full line or needs adjustment.
+          // Let's adjust _parseTableHeader to handle anonymous format "@(count)..." 
+          // and we assign the key as the table name.
+          const [_, tableInfo] = this._parseTableHeader(val);
+          currentTableName = key;
+          currentTable = tableInfo;
+          tables[currentTableName] = currentTable;
+        } else {
+          currentTable = null;  // Exit table mode (safety)
+          metadata[key] = this._parseValue(val);
+        }
       }
     }
 
@@ -94,22 +110,114 @@ export class ZonDecoder {
   }
 
   /**
-   * Parse table header line.
-   * Format: @tablename(count): col1, col2, col3
+   * Parse table header line (supports v1.x and v2.0.0 formats).
+   * v2.0: @count[omitted]: cols or @count: cols
+   * v1.x: @tablename(count): cols
    */
   private _parseTableHeader(line: string): [string, TableInfo] {
-    const pattern = new RegExp(`^${TABLE_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\w+)\\((\\d+)\\)${META_SEPARATOR.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(.+)$`);
-    const match = line.match(pattern);
+    // Try v2.0 format with name: @name(count)[col][col]:columns
+    const v2NamedPattern = /^@(\w+)\((\d+)\)(\[\w+\])*:(.+)$/;
+    const v2NamedMatch = line.match(v2NamedPattern);
+
+    if (v2NamedMatch) {
+      const tableName = v2NamedMatch[1];
+      const count = parseInt(v2NamedMatch[2], 10);
+      const omittedStr = v2NamedMatch[3] || '';
+      const colsStr = v2NamedMatch[4];
+
+      // Parse omitted columns
+      const omittedCols: string[] = [];
+      if (omittedStr) {
+        const matches = omittedStr.matchAll(/\[(\w+)\]/g);
+        for (const m of matches) {
+          omittedCols.push(m[1]);
+        }
+      }
+
+      const cols = colsStr.split(',').map(c => c.trim());
+
+      return [tableName, {
+        cols,
+        omittedCols,
+        rows: [],
+        prev_vals: Object.fromEntries(cols.map(col => [col, null])),
+        row_index: 0,
+        expected_rows: count
+      }];
+    }
+
+    // Try v2.1 format (anonymous/value): @(count)[col]:columns
+    const v2ValuePattern = /^@\((\d+)\)(\[\w+\])*:(.+)$/;
+    const v2ValueMatch = line.match(v2ValuePattern);
+
+    if (v2ValueMatch) {
+      const count = parseInt(v2ValueMatch[1], 10);
+      const omittedStr = v2ValueMatch[2] || '';
+      const colsStr = v2ValueMatch[3];
+
+      // Parse omitted columns
+      const omittedCols: string[] = [];
+      if (omittedStr) {
+        const matches = omittedStr.matchAll(/\[(\w+)\]/g);
+        for (const m of matches) {
+          omittedCols.push(m[1]);
+        }
+      }
+
+      const cols = colsStr.split(',').map(c => c.trim());
+
+      return ['data', {
+        cols,
+        omittedCols,
+        rows: [],
+        prev_vals: Object.fromEntries(cols.map(col => [col, null])),
+        row_index: 0,
+        expected_rows: count
+      }];
+    }
+
+    // Try v2.0 format (anonymous): @count[col][col]:columns
+    const v2Pattern = /^@(\d+)(\[\w+\])*:(.+)$/;
+    const v2Match = line.match(v2Pattern);
     
-    if (!match) {
+    if (v2Match) {
+      const count = parseInt(v2Match[1], 10);
+      const omittedStr = v2Match[2] || '';
+      const colsStr = v2Match[3];
+
+      // Parse omitted columns
+      const omittedCols: string[] = [];
+      if (omittedStr) {
+        const matches = omittedStr.matchAll(/\[(\w+)\]/g);
+        for (const m of matches) {
+          omittedCols.push(m[1]);
+        }
+      }
+
+      // Parse visible columns
+      const cols = colsStr.split(',').map(c => c.trim());
+
+      return ['data', {
+        cols,
+        omittedCols,
+        rows: [],
+        prev_vals: Object.fromEntries(cols.map(col => [col, null])),
+        row_index: 0,
+        expected_rows: count
+      }];
+    }
+
+    // Fallback to v1.x format: @tablename(count):cols
+    const v1Pattern = /^@(\w+)\((\d+)\):(.+)$/;
+    const v1Match = line.match(v1Pattern);
+    
+    if (!v1Match) {
       throw new ZonDecodeError(`Invalid table header: ${line}`);
     }
 
-    const tableName = match[1];
-    const count = parseInt(match[2], 10);
-    const colsStr = match[3];
-
-    // Parse column names
+    const tableName = v1Match[1];
+    const count = parseInt(v1Match[2], 10);
+    const colsStr = v1Match[3];
     const cols = colsStr.split(',').map(c => c.trim());
 
     return [tableName, {
@@ -122,10 +230,9 @@ export class ZonDecoder {
   }
 
   /**
-   * Parse a table row with compression token support.
+   * Parse a table row with v2.0 sparse encoding support.
    */
   private _parseTableRow(line: string, table: TableInfo): Record<string, any> {
-    // Parse CSV tokens
     const tokens = this._parseCSVLine(line);
 
     // Pad if needed
@@ -134,20 +241,60 @@ export class ZonDecoder {
     }
 
     const row: Record<string, any> = {};
-    const prevVals = table.prev_vals;
+    let tokenIdx = 0;
 
-    for (let i = 0; i < table.cols.length; i++) {
-      const col = table.cols[i];
-      const tok = tokens[i];
+    // Parse core columns
+    for (const col of table.cols) {
+      if (tokenIdx < tokens.length) {
+        const tok = tokens[tokenIdx];
+        row[col] = this._parseValue(tok);
+        tokenIdx++;
+      }
+    }
 
-      // Explicit value
-      const val = this._parseValue(tok);
-      row[col] = val;
-      prevVals[col] = val;
+    // Parse optional fields (v2.0 sparse encoding: key:value)
+    while (tokenIdx < tokens.length) {
+      const tok = tokens[tokenIdx];
+      if (tok.includes(':') && !this._isURL(tok) && !this._isTimestamp(tok)) {
+        // Try to parse as key:value
+        const colonIdx = tok.indexOf(':');
+        const key = tok.substring(0, colonIdx).trim();
+        const val = tok.substring(colonIdx + 1).trim();
+        
+        // Validate key is a simple identifier
+        if (/^[a-zA-Z_]\w*$/.test(key)) {
+          row[key] = this._parseValue(val);
+        } else {
+          // Not a key:value pair, might be a value with colon
+          // This shouldn't happen in well-formed data
+        }
+      }
+      tokenIdx++;
+    }
+
+    // Reconstruct omitted sequential columns (v2.0)
+    if (table.omittedCols) {
+      for (const col of table.omittedCols) {
+        row[col] = table.row_index + 1;
+      }
     }
 
     table.row_index++;
     return row;
+  }
+
+  /**
+   * Check if string is a URL.
+   */
+  private _isURL(s: string): boolean {
+    return /^https?:\/\//.test(s) || /^[\/]/.test(s);
+  }
+
+  /**
+   * Check if string is a timestamp with colons.
+   */
+  private _isTimestamp(s: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s) || /^\d{2}:\d{2}:\d{2}/.test(s);
   }
 
   /**
@@ -208,7 +355,11 @@ export class ZonDecoder {
    * - Dict: {key:val,key:val}
    * - List: [val,val]
    */
-  private _parseZonNode(text: string): any {
+  private _parseZonNode(text: string, depth: number = 0): any {
+    if (depth > 100) {
+      throw new ZonDecodeError('Maximum nesting depth exceeded (100)');
+    }
+
     const trimmed = text.trim();
     if (!trimmed) {
       return null;
@@ -240,7 +391,7 @@ export class ZonDecoder {
         const valStr = pair.substring(colonPos + 1).trim();
 
         const key = this._parsePrimitive(keyStr);
-        const val = this._parseZonNode(valStr);
+        const val = this._parseZonNode(valStr, depth + 1);
         obj[key] = val;
       }
 
@@ -255,7 +406,7 @@ export class ZonDecoder {
       }
 
       const items = this._splitByDelimiter(content, ',');
-      return items.map(item => this._parseZonNode(item));
+      return items.map(item => this._parseZonNode(item, depth + 1));
     }
 
     // Leaf node (primitive)
@@ -412,7 +563,7 @@ export class ZonDecoder {
             if (typeof decodedUnquoted === 'string') {
               const stripped = decodedUnquoted.trim();
               if (stripped.startsWith('{') || stripped.startsWith('[')) {
-                return this._parseZonNode(stripped);
+                return this._parseZonNode(stripped, 0);
               }
             }
             return decodedUnquoted;
@@ -447,7 +598,7 @@ export class ZonDecoder {
 
     // Check for ZON-style nested structures (braced)
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      return this._parseZonNode(trimmed);
+      return this._parseZonNode(trimmed, 0);
     }
 
     // Try number
@@ -485,6 +636,12 @@ export class ZonDecoder {
       }
 
       const parts = key.split('.');
+      
+      // SECURITY: Prevent prototype pollution
+      if (parts.some(p => p === '__proto__' || p === 'constructor' || p === 'prototype')) {
+        continue;
+      }
+
       let target: any = result;
 
       // Navigate/create nested structure

@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-11-27T22:23:25.640Z",
+  "models": {
+    "gpt-5-nano": {
+      "ZON": {
+        "correct": 24,
+        "total": 24,
+        "tokens": 22909,
+        "errors": 0
+      },
+      "TOON": {
+        "correct": 24,
+        "total": 24,
+        "tokens": 20477,
+        "errors": 0
+      },
+      "JSON": {
+        "correct": 22,
+        "total": 24,
+        "tokens": 28173,
+        "errors": 0
+      },
+      "YAML": {
+        "correct": 22,
+        "total": 24,
+        "tokens": 23939,
+        "errors": 0
+      },
+      "CSV": {
+        "correct": 24,
+        "total": 24,
+        "tokens": 19684,
+        "errors": 0
+      },
+      "XML": {
+        "correct": 24,
+        "total": 24,
+        "tokens": 31478,
+        "errors": 0
+      }
+    }
+  },
+  "summary": {}
+}

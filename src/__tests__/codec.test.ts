@@ -209,7 +209,7 @@ describe('ZON Codec', () => {
       // Verify the encoded format structure
       expect(encoded).toContain('context:');
       expect(encoded).toContain('friends:');
-      expect(encoded).toContain('@hikes(3):');
+      expect(encoded).toContain('hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny');
     });
   });
 
@@ -299,6 +299,16 @@ describe('ZON Codec', () => {
       const decoded = decode(encoded);
       expect(decoded).toEqual(data);
     });
+
+    test('Array of primitives', () => {
+      const data = ['apple', 'banana', 'cherry'];
+      const encoded = encode(data);
+      const decoded = decode(encoded);
+      expect(decoded).toEqual(data);
+      // Should be encoded as JSON array, not table
+      expect(encoded.startsWith('[')).toBe(true);
+    });
+
 
     test('Deeply nested objects', () => {
       const data = {

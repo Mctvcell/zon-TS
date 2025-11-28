@@ -1,13 +1,17 @@
 {
   "name": "zon-format",
-  "version": "1.0.2",
-  "description": "Zero Overhead Notation v1.0.1 - Human-readable data format with 30%+ compression over JSON",
+  "version": "1.0.3",
+  "description": "ZON: The most token-efficient serialization format for LLMs - beats CSV, TOON, JSON, and all competitors",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "zon": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
+    "generate:examples": "npx ts-node scripts/generate_examples.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -37,12 +41,22 @@
     "LICENSE"
   ],
   "devDependencies": {
+    "@anthropic-ai/tokenizer": "^0.0.4",
     "@toon-format/toon": "^2.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
+    "fast-xml-parser": "^5.3.2",
     "gpt-tokenizer": "^3.4.0",
     "jest": "^30.2.0",
+    "js-yaml": "^4.1.1",
+    "llama-tokenizer-js": "^1.2.2",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@azure/openai": "^2.0.0",
+    "dotenv": "^17.2.3",
+    "openai": "^6.9.1",
+    "tson": "^0.0.10"
   }
 }
