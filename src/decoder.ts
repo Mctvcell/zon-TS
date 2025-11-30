@@ -54,8 +54,19 @@ export class ZonDecoder {
 
     // Special case: Root-level ZON list (irregular schema)
     // If entire input is a single line starting with [, it's a ZON list
-    if (lines.length === 1 && lines[0].trim().startsWith('[')) {
-      return this._parseZonNode(lines[0]);
+    if (lines.length === 1) {
+      const line = lines[0].trim();
+      if (line.startsWith('[')) {
+        return this._parseZonNode(line);
+      }
+      // Special case: Single primitive value (no colon, no @)
+      // v2.0.5: Also check for colon-less object/array pattern (key{...})
+      // If it looks like key{...}, it's NOT a primitive, it's a root node or metadata
+      const hasBlock = /^[a-zA-Z0-9_]+\s*[\{\[]/.test(line);
+      
+      if (!line.includes(META_SEPARATOR) && !line.startsWith(TABLE_MARKER) && !hasBlock) {
+        return this._parsePrimitive(line);
+      }
     }
 
     // Main decode loop
@@ -98,25 +109,69 @@ export class ZonDecoder {
         }
       }
       // Metadata line OR Named Table (v2.1): key: @...
-      else if (trimmedLine.includes(META_SEPARATOR)) {
-        const sepIndex = trimmedLine.indexOf(META_SEPARATOR);
-        const key = trimmedLine.substring(0, sepIndex).trim();
-        const val = trimmedLine.substring(sepIndex + 1).trim();
+      // OR Colon-less Object (v2.0.5): key{...}
+      else {
+        // We need to find the split point (colon or brace/bracket)
+        let splitIdx = -1;
+        let splitChar = '';
+        let depth = 0;
+        let inQuote = false;
         
-        // Check if it's a named table start: users: @(5)...
-        if (val.startsWith(TABLE_MARKER)) {
-          // Parse header from value part
-          // We pass the value part (e.g. "@(5):col1,col2") to _parseTableHeader
-          // But _parseTableHeader expects the full line or needs adjustment.
-          // Let's adjust _parseTableHeader to handle anonymous format "@(count)..." 
-          // and we assign the key as the table name.
-          const [_, tableInfo] = this._parseTableHeader(val);
-          currentTableName = key;
-          currentTable = tableInfo;
-          tables[currentTableName] = currentTable;
+        for (let i = 0; i < trimmedLine.length; i++) {
+          const char = trimmedLine[i];
+          if (char === '"') inQuote = !inQuote;
+          if (!inQuote) {
+            if (char === '{' || char === '[') depth++;
+            if (char === '}' || char === ']') depth--;
+            
+            // Split at first colon (if depth 0) OR first {/[ (if depth 0 and no colon yet)
+            // Wait, if we see { at depth 0, that IS the split.
+            // But we need to be careful. "key":val has colon. "key"{val} has brace.
+            
+            if (depth === 1 && (char === '{' || char === '[')) {
+               // We just entered a block. If we haven't found a colon yet, this is the split.
+               if (splitIdx === -1) {
+                 splitIdx = i;
+                 splitChar = char;
+                 break;
+               }
+            }
+            if (char === ':' && depth === 0) {
+               splitIdx = i;
+               splitChar = ':';
+               break;
+            }
+          }
+        }
+        
+        if (splitIdx !== -1) {
+          let key: string;
+          let val: string;
+          
+          if (splitChar === ':') {
+             key = trimmedLine.substring(0, splitIdx).trim();
+             val = trimmedLine.substring(splitIdx + 1).trim();
+          } else {
+             // Split at { or [ (include it in value)
+             key = trimmedLine.substring(0, splitIdx).trim();
+             val = trimmedLine.substring(splitIdx).trim();
+          }
+          
+          // Check if it's a named table start: users: @(5)...
+          if (val.startsWith(TABLE_MARKER)) {
+            const [_, tableInfo] = this._parseTableHeader(val);
+            currentTableName = key;
+            currentTable = tableInfo;
+            tables[currentTableName] = currentTable;
+          } else {
+            currentTable = null;  // Exit table mode (safety)
+            metadata[key] = this._parseValue(val);
+          }
         } else {
-          currentTable = null;  // Exit table mode (safety)
-          metadata[key] = this._parseValue(val);
+           // No split found. Might be a primitive if it's the only line?
+           // But we handled single-line primitive above.
+           // If it's a multi-line file, this is a malformed line or a continuation?
+           // For now, ignore or treat as key with null?
         }
       }
     }
@@ -403,18 +458,66 @@ export class ZonDecoder {
       }
 
       for (const pair of pairs) {
-        if (!pair.includes(':')) {
+        // v2.0.5 Optimization: Handle Colon-less syntax (key{...} or key[...])
+        let keyStr: string;
+        let valStr: string;
+        
+        // We need to find the split point.
+        // Priority: First unquoted colon.
+        // If no colon, then first unquoted { or [ is the split point.
+        
+        let splitIdx = -1;
+        let splitChar = '';
+        let inQuote = false;
+        let quoteChar = '';
+        let depth = 0;
+        
+        for (let i = 0; i < pair.length; i++) {
+          const char = pair[i];
+          
+          if (char === '\\' && i + 1 < pair.length) {
+            i++; continue;
+          }
+          
+          if (['"', "'"].includes(char)) {
+            if (!inQuote) { inQuote = true; quoteChar = char; }
+            else if (char === quoteChar) { inQuote = false; }
+          } else if (!inQuote) {
+            if (char === ':') {
+              if (depth === 0) {
+                splitIdx = i;
+                splitChar = ':';
+                break; // Colon always wins if at top level
+              }
+            } else if (char === '{' || char === '[') {
+              if (depth === 0 && splitIdx === -1) {
+                // Potential split point if we don't find a colon later?
+                // Actually, if we see { at depth 0, that MUST be the start of the value block.
+                // A colon *after* this would be inside the block (impossible if depth tracks correctly)
+                // or invalid syntax.
+                splitIdx = i;
+                splitChar = char;
+                break; 
+              }
+              depth++;
+            } else if (char === '}' || char === ']') {
+              depth--;
+            }
+          }
+        }
+        
+        if (splitIdx !== -1) {
+          if (splitChar === ':') {
+            keyStr = pair.substring(0, splitIdx).trim();
+            valStr = pair.substring(splitIdx + 1).trim();
+          } else {
+            // Split at { or [ (include it in value)
+            keyStr = pair.substring(0, splitIdx).trim();
+            valStr = pair.substring(splitIdx).trim();
+          }
+        } else {
           continue;
         }
-
-        // Find first unquoted colon
-        const colonPos = this._findDelimiter(pair, ':');
-        if (colonPos === -1) {
-          continue;
-        }
-
-        const keyStr = pair.substring(0, colonPos).trim();
-        const valStr = pair.substring(colonPos + 1).trim();
 
         const key = this._parsePrimitive(keyStr);
         const val = this._parseZonNode(valStr, depth + 1);

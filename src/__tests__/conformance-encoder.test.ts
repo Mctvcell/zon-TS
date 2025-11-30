@@ -101,7 +101,9 @@ describe('Encoder Conformance (§11.1)', () => {
     const encoded = encode(data);
     
     expect(encoded).toContain('"a,b"');
-    expect(encoded).toContain('"x:y"');
+    // v2.0.5: Colons are allowed unquoted
+    // expect(encoded).toContain('"x:y"'); 
+    expect(encoded).toContain('x:y');
     // Uses quote doubling: " becomes ""
     expect(encoded).toContain('"say ""hi"""');
   });
@@ -127,7 +129,8 @@ describe('Encoder Conformance (§11.1)', () => {
     const data = {};
     const encoded = encode(data);
     
-    expect(encoded).toBe('{}');
+    // Empty object is empty string in ZON
+    expect(encoded).toBe('');
   });
 
   test('should handle empty arrays', () => {

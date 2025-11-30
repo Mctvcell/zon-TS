@@ -16,7 +16,7 @@
 
 ## Abstract
 
-Zero Overhead Notation (ZON) is a compact, line-oriented text format that encodes the JSON data model with minimal redundancy optimized for large language model token efficiency. ZON achieves 35-50% token reduction compared to JSON through single-character primitives (`T`, `F`), null as `null`, explicit table markers (`@`), and intelligent quoting rules. Arrays of uniform objects use tabular encoding with column headers declared once; metadata uses flat key-value pairs. This specification defines ZON's concrete syntax, canonical value formatting, encoding/decoding behavior, conformance requirements, and strict validation rules. ZON provides deterministic, lossless representation achieving 100% LLM retrieval accuracy in benchmarks.
+Zero Overhead Notation (ZON) is a compact, line-oriented text format that encodes the JSON data model with minimal redundancy optimized for large language model token efficiency. ZON achieves up to 23.8% token reduction compared to JSON through single-character primitives (`T`, `F`), null as `null`, explicit table markers (`@`), colon-less nested structures, and intelligent quoting rules. Arrays of uniform objects use tabular encoding with column headers declared once; metadata uses flat key-value pairs. This specification defines ZON's concrete syntax, canonical value formatting, encoding/decoding behavior, conformance requirements, and strict validation rules. ZON provides deterministic, lossless representation achieving 100% LLM retrieval accuracy in benchmarks.
 
 ## Status of This Document
 

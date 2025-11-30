@@ -52,6 +52,13 @@ export class ZonEncoder {
 
     // Fallback for simple/empty data
     if (!streamData && (!metadata || Object.keys(metadata).length === 0)) {
+      if (typeof data === 'object' && data !== null) {
+        // Special case: Empty object -> empty string
+        if (!Array.isArray(data) && Object.keys(data).length === 0) {
+            return "";
+        }
+        return this._formatZonNode(data);
+      }
       return JSON.stringify(data);
     }
 
@@ -103,6 +110,13 @@ export class ZonEncoder {
       if (data.length > 0 && typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
         return [data, {}, null];
       }
+      
+      // v2.0.2 Optimization: Root-level array of primitives -> [val,val]
+      // Uses optimized _formatZonNode (no quotes)
+      if (data.length > 0 && data.every(item => typeof item !== 'object' || item === null)) {
+        return [null, {}, null]; // Fallback to JSON.stringify -> _formatZonNode logic
+      }
+
       return [null, {}, null];  // Treat as simple value
     }
 
@@ -122,7 +136,11 @@ export class ZonEncoder {
       }
 
       if (candidates.length > 0) {
-        candidates.sort((a, b) => b[2] - a[2]);
+        candidates.sort((a, b) => {
+          const scoreDiff = b[2] - a[2];
+          if (scoreDiff !== 0) return scoreDiff;
+          return a[0].localeCompare(b[0]); // Tie-breaker: alphabetical key
+        });
         const [key, stream] = candidates[0];
         const meta: Record<string, any> = {};
         
@@ -144,13 +162,22 @@ export class ZonEncoder {
    */
   private _writeMetadata(metadata: Record<string, any>): string[] {
     const lines: string[] = [];
-    const flattened = this._flatten(metadata);
+    // v2.0.3 Optimization: Flatten top-level objects (depth 1)
+    // This converts config:{db:{...}} into config.db:{...}
+    // Reduces "Mega Object" nesting at the root
+    const flattened = this._flatten(metadata, '', '.', 1);
 
     const sortedKeys = Object.keys(flattened).sort();
     for (const key of sortedKeys) {
-      const value = flattened[key];
-      const valStr = this._formatValue(value);
-      lines.push(`${key}${META_SEPARATOR}${valStr}`);
+      const val = flattened[key];
+      const valStr = this._formatValue(val);
+      
+      // v2.0.5 Optimization: Colon-less syntax for root metadata
+      if (valStr.startsWith('{') || valStr.startsWith('[')) {
+        lines.push(`${key}${valStr}`);
+      } else {
+        lines.push(`${key}${META_SEPARATOR}${valStr}`);
+      }
     }
 
     return lines;
@@ -466,7 +493,7 @@ export class ZonEncoder {
     }
 
     if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-      const keys = Object.keys(val);
+      const keys = Object.keys(val).sort();
       if (keys.length === 0) {
         return "{}";
       }
@@ -481,7 +508,14 @@ export class ZonEncoder {
 
         // Format value recursively
         const vStr = this._formatZonNode(val[k], visited);
-        items.push(`${kStr}:${vStr}`);
+        
+        // v2.0.5 Optimization: Colon-less Objects/Arrays (key{...} or key[...])
+        // If value starts with { or [, omit the colon
+        if (vStr.startsWith('{') || vStr.startsWith('[')) {
+          items.push(`${kStr}${vStr}`);
+        } else {
+          items.push(`${kStr}:${vStr}`);
+        }
       }
       return "{" + items.join(",") + "}";
     } else if (Array.isArray(val)) {
@@ -516,35 +550,36 @@ export class ZonEncoder {
     }
 
     // String handling - only quote if necessary
-    const s = String(val);
+  const s = String(val);
 
-    // CRITICAL FIX: Always JSON-stringify strings with newlines to prevent line breaks in ZON
-    if (s.includes('\n') || s.includes('\r')) {
-      return JSON.stringify(s);
-    }
+  // CRITICAL FIX: Always JSON-stringify strings with newlines to prevent line breaks in ZON
+  if (s.includes('\n') || s.includes('\r')) {
+    return JSON.stringify(s);
+  }
 
-    // Quote empty strings or whitespace-only strings to prevent them being parsed as null
-    if (!s.trim()) {
-      return JSON.stringify(s);
-    }
-
-    // Quote strings that look like reserved words or numbers to prevent type confusion
-    if (['T', 'F', 'null', 'true', 'false'].includes(s)) {
-      return JSON.stringify(s);
-    }
-
-    // Quote if it looks like a number (to preserve string type)
-    if (/^-?\d+(\.\d+)?$/.test(s)) {
-      return JSON.stringify(s);
-    }
-
-    // Quote if contains structural delimiters
-    if (/[,:\{\}\[\]"]/.test(s)) {
-      return JSON.stringify(s);
-    }
-
+  // OPTIMIZATION 1: ISO Date Detection (Same as _formatValue)
+  if (this._isISODate(s)) {
     return s;
   }
+
+  // OPTIMIZATION 2: Smarter Number Detection (Same as _formatValue)
+  if (this._needsTypeProtection(s)) {
+    return JSON.stringify(s);
+  }
+
+  // Quote empty strings or whitespace-only strings
+  if (!s.trim()) {
+    return JSON.stringify(s);
+  }
+
+  // Quote if contains structural delimiters
+  // v2.0.1 Optimization: Allow colons in values (e.g. URLs, timestamps)
+  if (/[,\{\}\[\]"]/.test(s)) {
+    return JSON.stringify(s);
+  }
+
+  return s;
+}
 
   /**
    * Format a value with minimal quoting.
@@ -682,8 +717,9 @@ export class ZonEncoder {
       return true;
     }
     
-    // Control characters need JSON escaping
-    if (/[\n\r\t]/.test(s)) {
+    // Control characters need JSON escaping (prevent binary file)
+    // Matches ASCII 0-31 (including null, backspace, etc.)
+    if (/[\x00-\x1f]/.test(s)) {
       return true;
     }
 
@@ -754,7 +790,9 @@ export class ZonEncoder {
     }
 
     // Only quote if contains delimiter or control chars
-    if (/[,\n\r\t"\[\]|;:]/.test(s)) {
+    // v2.0.1 Optimization: Allow colons in values (e.g. URLs, timestamps)
+    // The decoder splits on the FIRST colon, so subsequent colons in value are safe.
+    if (/[,\n\r\t"\[\]|;]/.test(s)) {
       return true;
     }
 

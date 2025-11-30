@@ -44,8 +44,9 @@ class AzureAIClient {
     // Model deployments (user's Azure AI Studio deployments)
     this.models = {
       'gpt-5-nano': process.env.AZURE_GPT5_DEPLOYMENT || 'gpt-5-nano',
-      'grok-4-fast-reasoning': process.env.AZURE_GROK_DEPLOYMENT || 'grok-4-fast-reasoning',
-      'llama-4-maverick': process.env.AZURE_LLAMA_DEPLOYMENT || 'Llama-4-Maverick-17B-128E-Instruct-FP8'
+      'grok-3': process.env.AZURE_GROK3_DEPLOYMENT || 'grok-3',
+      'deepseek-v3.1': process.env.AZURE_DEEPSEEK_DEPLOYMENT || 'DeepSeek-V3.1',
+      'Llama-3.3-70B-Instruct': process.env.AZURE_LLAMA33_DEPLOYMENT || 'Llama-3.3-70B-Instruct'
     };
     
     console.log(`✅ Azure AI client initialized`);
@@ -184,9 +185,10 @@ class AzureAIClient {
   estimateCost(modelName, promptTokens, completionTokens) {
     // Prices per 1M tokens (input/output) - estimates from Azure AI pricing
     const pricing = {
-      'gpt-5-nano': {input: 0.15, output: 0.30},        // Nano is very cheap
-      'grok-4-fast-reasoning': {input: 5.00, output: 10.00},
-      'llama-4-maverick': {input: 1.00, output: 2.00}   // Open source, cheaper
+      'gpt-5-nano': {input: 0.15, output: 0.30},
+      'grok-3': {input: 2.00, output: 4.00},            // Estimated
+      'deepseek-v3.1': {input: 0.50, output: 1.00},
+      'Llama-3.3-70B-Instruct': {input: 0.70, output: 0.90} // Llama 3.3 pricing
     };
     
     const modelPrices = pricing[modelName] || pricing['gpt-5-nano'];

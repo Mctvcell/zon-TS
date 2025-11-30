@@ -207,8 +207,11 @@ describe('ZON Codec', () => {
       expect(decoded).toEqual(data);
 
       // Verify the encoded format structure
-      expect(encoded).toContain('context:');
-      expect(encoded).toContain('friends:');
+      // v2.0.5: Context is flattened (dot notation)
+      expect(encoded).toContain('context.task:');
+      // v2.0.5: Friends array is colon-less
+      expect(encoded).toContain('friends[');
+      // Hikes table still uses colon because it starts with @
       expect(encoded).toContain('hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny');
     });
   });

@@ -5,14 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.4] - 2025-11-29
+## [2.0.5] - 2025-11-30
+
+### Added
+- **Colon-less Syntax:** Objects and arrays in nested positions now use `key{...}` and `key[...]` syntax, removing redundant colons.
+- **Smart Flattening:** Top-level nested objects are automatically flattened to dot notation (e.g., `config.db{...}`).
+- **Control Character Escaping:** All control characters (ASCII 0-31) are now properly escaped to prevent binary file creation.
+
+### Improved
+- **Token Efficiency:** Achieved up to 23.8% reduction vs JSON (GPT-4o) thanks to syntax optimizations.
+- **Readability:** Cleaner, block-like structure for nested data.
+
+## [2.0.4] - 2025-11-29
 
 ### Fixed
 - **Critical Data Integrity**: Fixed roundtrip failures for strings containing newlines, empty strings, and escaped characters.
 - **Decoder Logic**: Fixed `_splitByDelimiter` to correctly handle nested arrays and objects within table cells (e.g., `[10, 20]`).
 - **Encoder Logic**: Added mandatory quoting for empty strings and strings with newlines to prevent data loss.
 
-### Documentation
+### Documentation[]
 - Updated `SPEC.md` and `syntax-cheatsheet.md` to explicitly require quoting for empty strings and escape sequences.
 
 ## [1.0.3] - 2025-11-28

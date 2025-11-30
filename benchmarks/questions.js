@@ -57,7 +57,26 @@ function generateUnifiedQuestions() {
   // --- Validation ---
   questions.push(
     { q: "Are all user IDs unique?", a: "true", type: QUESTION_TYPES.STRUCTURAL_VALIDATION },
-    { q: "Do all logs have a timestamp?", a: "true", type: QUESTION_TYPES.STRUCTURAL_VALIDATION }
+    { q: "Do all logs have a timestamp?", a: "true", type: QUESTION_TYPES.STRUCTURAL_VALIDATION },
+
+    // --- Complex Filtering (New) ---
+    { q: "How many users are active AND have role 'admin'?", a: "1", type: QUESTION_TYPES.FILTERING },
+    { q: "Which user has the highest ID?", a: "Eve External", type: QUESTION_TYPES.FILTERING },
+    { q: "How many logs are NOT 'INFO' level?", a: "2", type: QUESTION_TYPES.FILTERING },
+
+    // --- Deep Nested Retrieval (New) ---
+    { q: "What is the port of the database?", a: "5432", type: QUESTION_TYPES.FIELD_RETRIEVAL },
+    { q: "Is the 'darkMode' feature enabled?", a: "true", type: QUESTION_TYPES.FIELD_RETRIEVAL },
+
+    // --- Aggregation (New) ---
+    { q: "What is the sum of all user IDs?", a: "15", type: QUESTION_TYPES.AGGREGATION },
+    { q: "How many top-level keys are in the config object?", a: "3", type: QUESTION_TYPES.AGGREGATION },
+
+    // --- Complex Reasoning (New) ---
+    { q: "Is the user with the highest login count active?", a: "true", type: QUESTION_TYPES.FILTERING },
+    { q: "What is the role of the user who logged in most recently?", a: "guest", type: QUESTION_TYPES.FILTERING },
+    { q: "How many users have a role starting with 'a'?", a: "1", type: QUESTION_TYPES.FILTERING },
+    { q: "Does the 'cache' config have more nodes than 'database' replicas?", a: "true", type: QUESTION_TYPES.STRUCTURE_AWARENESS }
   );
 
   return { unifiedDataset: questions };

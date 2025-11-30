@@ -327,7 +327,7 @@ Compared to JSON on typical LLM data:
 | JSON (formatted) | 28,042 | - |
 | JSON (compact) | 27,300 | 2.6% |
 | TOON | 20,988 | 25.1% |
-| **ZON** | **19,995** | **29%** 👑 |
+| **ZON** | **19,995** | **23.8%** 👑 |
 
 **ZON is optimized for:**
 - ✅ Uniform arrays of objects (tables)

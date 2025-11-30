@@ -9,7 +9,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('util');
-const { encode: encodeZon } = require('../dist/index');
+const { encode: encodeZon, decode: decodeZon, validate } = require('../dist/index');
 const { encode: encodeTOON } = require('@toon-format/toon');
 const { encode: encodeTokens } = require('gpt-tokenizer');
 const yaml = require('js-yaml');
@@ -19,6 +19,7 @@ const datasets = require('./datasets');
 const { generateUnifiedQuestions } = require('./questions');
 const { AzureAIClient } = require('./llm-client');
 const { validateAnswer, extractAnswer } = require('./validators');
+const { UnifiedSchema } = require('./schema-def');
 
 // TSON (using CSON as proxy)
 const tson = require('cson');
@@ -98,6 +99,7 @@ async function runBenchmark() {
   if (fs.existsSync(CACHE_DIR)) {
     fs.rmSync(CACHE_DIR, { recursive: true, force: true });
   }
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
   console.log('✅ Cache cleared\n');
   
   console.log('╔════════════════════════════════════════════════════════════════════════════╗');
@@ -106,10 +108,10 @@ async function runBenchmark() {
   
   // Initialize client
   const client = new AzureAIClient();
-    const models = ['gpt-5-nano', 'llama-4-maverick']; // Added Llama-4 as requested
+  const models = ['gpt-5-nano', 'deepseek-v3.1', 'grok-3', 'Llama-3.3-70B-Instruct'];
   
   // Get questions
-  const allQuestions = generateUnifiedQuestions();
+  const allQuestions = require('./questions-309');
   const datasetName = 'unifiedDataset';
   
   // Formats to test
@@ -149,6 +151,34 @@ async function runBenchmark() {
       encodedData[format] = encodeData(data, format);
       if (encodedData[format]) {
         dataTokens[format] = encodeTokens(encodedData[format]).length;
+      }
+
+      // --- ZON Eval Integration ---
+      if (format === 'ZON' && datasetName === 'unifiedDataset') {
+        console.log('   🛡️  Validating ZON data with Schema...');
+        const validation = validate(encodedData[format], UnifiedSchema);
+        if (validation.success) {
+          console.log('      ✅ ZON Data is Schema-Valid');
+        } else {
+          console.error('      ❌ ZON Data Validation Failed:', validation.error);
+          console.error('      Issues:', validation.issues);
+        }
+
+        // --- Roundtrip Check ---
+        console.log('   🔄 Verifying Roundtrip Integrity...');
+        try {
+          const decoded = decodeZon(encodedData[format]);
+          const reEncoded = encodeZon(decoded);
+          if (reEncoded === encodedData[format]) {
+             console.log('      ✅ Roundtrip Successful (Lossless)');
+          } else {
+             console.error('      ❌ Roundtrip Mismatch!');
+             // console.log('Original:', encodedData[format]);
+             // console.log('Re-encoded:', reEncoded);
+          }
+        } catch (e) {
+          console.error('      ❌ Roundtrip Failed (Decode Error):', e.message);
+        }
       }
     });
     

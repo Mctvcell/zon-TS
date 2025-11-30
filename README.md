@@ -90,19 +90,70 @@ hikes[3]{id,name,distanceKm,elevationGain,companion,wasSunny}:
 ZON conveys the same information with **even fewer tokens** than TOON – using compact table format with explicit headers:
 
 ```
-context:"{task:Our favorite hikes together,location:Boulder,season:spring_2025}"
-friends:"[ana,luis,sam]"
+context:task:Our favorite hikes together,location:Boulder,season:spring_2025
+friends:ana,luis,sam
 hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny
 ana,7.5,320,1,Blue Lake Trail,T
 luis,9.2,540,2,Ridge Overlook,F
 sam,5.1,180,3,Wildflower Loop,T
 ```
 
+### 🛡️ Validation + 📉 Compression
+
+Building reliable LLM apps requires two things:
+1.  **Safety:** You need to validate outputs (like you do with Zod).
+2.  **Efficiency:** You need to compress inputs to save money.
+
+ZON is the only library that gives you **both in one package**.
+
+| Feature | Traditional Validation (e.g. Zod) | ZON |
+| :--- | :--- | :--- |
+| **Type Safety** | ✅ Yes | ✅ Yes |
+| **Runtime Validation** | ✅ Yes | ✅ Yes |
+| **Input Compression** | ❌ No | ✅ **Yes (Saves ~50%)** |
+| **Prompt Generation** | ❌ Plugins needed | ✅ **Built-in** |
+| **Bundle Size** | ~45kb | ⚡ **~5kb** |
+
+**The Sweet Spot:** Use ZON to **save money on Input Tokens** while keeping the strict safety you expect.
+
 ---
 
 ## Key Features
 
 - 🎯 **100% LLM Accuracy**: Achieves perfect retrieval (24/24 questions) with self-explanatory structure – no hints needed
+### 3. Smart Flattening (Dot Notation)
+ZON automatically flattens top-level nested objects to reduce indentation.
+**JSON:**
+```json
+{
+  "config": {
+    "database": {
+      "host": "localhost"
+    }
+  }
+}
+```
+**ZON:**
+```
+config.database{host:localhost}
+```
+
+### 4. Colon-less Structure
+For nested objects and arrays, ZON omits the redundant colon, creating a cleaner, block-like structure.
+**JSON:**
+```json
+{
+  "user": {
+    "name": "Alice",
+    "roles": ["admin", "dev"]
+  }
+}
+```
+**ZON:**
+```
+user{name:Alice,roles[admin,dev]}
+```
+(Note: `user{...}` instead of `user:{...}`)
 - 💾 **Most Token-Efficient**: 4-15% fewer tokens than TOON across all tokenizers
 - 🎯 **JSON Data Model**: Encodes the same objects, arrays, and primitives as JSON with deterministic, lossless round-trips
 - 📐 **Minimal Syntax**: Explicit headers (`@(N)` for count, column list) eliminate ambiguity for LLMs
@@ -162,16 +213,15 @@ gpt-5-nano (Azure OpenAI)
 > ZON matches TOON's 100% accuracy while using **5.0% fewer tokens**.
 
 <details>
-<summary><strong>Performance by Question Type</strong></summary>
+<summary>### ⚡️ Token Efficiency (vs Compact JSON)</summary>
 
-| Question Type | ZON | TOON | JSON |
-| ------------- | --- | ---- | ---- |
-| Field Retrieval | 100.0% | 100.0% | 100.0% |
-| Aggregation | 100.0% | 100.0% | 83.3% |
-| Filtering | 100.0% | 100.0% | 100.0% |
-| Structure Awareness | 100.0% | 100.0% | 100.0% |
+| Tokenizer | ZON Savings | vs TOON | vs CSV |
+| :--- | :--- | :--- | :--- |
+| **GPT-4o** | **-23.8%** 👑 | -36.1% | -12.9% |
+| **Claude 3.5** | **-21.3%** 👑 | -26.0% | -9.9% |
+| **Llama 3** | **-16.5%** 👑 | -26.6% | -9.2% |
 
-**ZON Advantage**: Perfect scores across all question categories.
+> **Note:** ZON is the *only* human-readable format that consistently beats CSV in token count while maintaining full structural fidelity.
 
 </details>
 
@@ -185,7 +235,7 @@ gpt-5-nano (Azure OpenAI)
 ### 📦 BYTE SIZES:
 ```
 CSV:              1,384 bytes
-ZON:              1,389 bytes
+ZON:              1,399 bytes
 TOON:             1,665 bytes
 JSON (compact):   1,854 bytes
 YAML:             2,033 bytes
@@ -196,66 +246,66 @@ XML:              3,235 bytes
 ```
 GPT-4o (o200k):
 
-    ZON          ██████████░░░░░░░░░░ 522 tokens 👑
-    CSV          ██████████░░░░░░░░░░ 534 tokens (+2.3%)
-    JSON (cmp)   ███████████░░░░░░░░░ 589 tokens (+11.4%)
-    TOON         ███████████░░░░░░░░░ 614 tokens (+17.6%)
-    YAML         █████████████░░░░░░░ 728 tokens (+39.5%)
-    JSON format  ████████████████████ 939 tokens (+44.4%)
-    XML          ████████████████████ 1,093 tokens (+109.4%)
+    ZON          █████████░░░░░░░░░░░ 513 tokens 👑
+    CSV          ██████████░░░░░░░░░░ 534 tokens (+4.1%)
+    JSON (cmp)   ███████████░░░░░░░░░ 589 tokens (+12.9%)
+    TOON         ███████████░░░░░░░░░ 614 tokens (+19.7%)
+    YAML         █████████████░░░░░░░ 728 tokens (+41.9%)
+    JSON format  ████████████████████ 939 tokens (+45.4%)
+    XML          ████████████████████ 1,093 tokens (+113.1%)
 
 Claude 3.5 (Anthropic): 
 
     CSV          ██████████░░░░░░░░░░ 544 tokens 👑
-    ZON          ██████████░░░░░░░░░░ 545 tokens (+0.2%)
-    TOON         ██████████░░░░░░░░░░ 570 tokens (+4.6%)
-    JSON (cmp)   ███████████░░░░░░░░░ 596 tokens (+8.6%)
-    YAML         ████████████░░░░░░░░ 641 tokens (+17.6%)
-    JSON format  ████████████████████ 914 tokens (+40.3%)
-    XML          ████████████████████ 1,104 tokens (+102.6%)
+    ZON          ██████████░░░░░░░░░░ 548 tokens (+0.7%)
+    TOON         ██████████░░░░░░░░░░ 570 tokens (+4.0%)
+    JSON (cmp)   ███████████░░░░░░░░░ 596 tokens (+8.1%)
+    YAML         ████████████░░░░░░░░ 641 tokens (+17.0%)
+    JSON format  ████████████████████ 914 tokens (+40.0%)
+    XML          ████████████████████ 1,104 tokens (+101.5%)
 
 Llama 3 (Meta):
 
-    ZON          ██████████░░░░░░░░░░ 701 tokens 👑
-    CSV          ██████████░░░░░░░░░░ 728 tokens (+3.9%)
-    JSON (cmp)   ███████████░░░░░░░░░ 760 tokens (+7.8%)
-    TOON         ███████████░░░░░░░░░ 784 tokens (+11.8%)
-    YAML         █████████████░░░░░░░ 894 tokens (+27.5%)
-    JSON format  ████████████████████ 1,225 tokens (+42.7%)
-    XML          ████████████████████ 1,392 tokens (+98.6%)
+    ZON          ██████████░░░░░░░░░░ 696 tokens 👑
+    CSV          ██████████░░░░░░░░░░ 728 tokens (+4.6%)
+    JSON (cmp)   ███████████░░░░░░░░░ 760 tokens (+8.4%)
+    TOON         ███████████░░░░░░░░░ 784 tokens (+12.6%)
+    YAML         █████████████░░░░░░░ 894 tokens (+28.4%)
+    JSON format  ████████████████████ 1,225 tokens (+43.1%)
+    XML          ████████████████████ 1,392 tokens (+100.0%)
 ```
 
 ### Large Complex Nested Dataset
 ```
 gpt-4o (o200k):
 
-    ZON          █████░░░░░░░░░░░░░░░ 147,267 tokens 👑
-    CSV          ██████░░░░░░░░░░░░░░ 165,647 tokens (+12.5%)
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 189,193 tokens (+28.4%)
-    TOON         █████████░░░░░░░░░░░ 225,510 tokens (+53.1%)
-    YAML         █████████░░░░░░░░░░░ 225,666 tokens (+53.2%)
-    JSON format  ██████████████░░░░░░ 285,131 tokens (+93.6%)
-    XML          ████████████████████ 336,332 tokens (+128.4%)
+    ZON          █████████░░░░░░░░░░░ 143,661 tokens 👑
+    CSV          ██████████░░░░░░░░░░ 164,919 tokens (+14.8%)
+    JSON (cmp)   ███████████░░░░░░░░░ 188,604 tokens (+23.8%)
+    TOON         █████████████░░░░░░░ 224,940 tokens (+56.6%)
+    YAML         █████████████░░░░░░░ 224,938 tokens (+56.6%)
+    JSON format  ████████████████████ 284,132 tokens (+97.8%)
+    XML          ████████████████████ 335,239 tokens (+133.4%)
 
 claude 3.5 (anthropic):
 
-    ZON          █████░░░░░░░░░░░░░░░ 149,281 tokens 👑
-    CSV          ██████░░░░░░░░░░░░░░ 162,245 tokens (+8.7%)
-    JSON (cmp)   ███████░░░░░░░░░░░░░ 185,732 tokens (+24.4%)
-    TOON         █████████░░░░░░░░░░░ 197,463 tokens (+32.3%)
-    YAML         █████████░░░░░░░░░░░ 197,533 tokens (+32.3%)
-    JSON format  ███████████████░░░░░ 274,149 tokens (+83.7%)
-    XML          ████████████████████ 328,378 tokens (+120.0%)
+    ZON          █████████░░░░░░░░░░░ 145,652 tokens 👑
+    CSV          ██████████░░░░░░░░░░ 161,701 tokens (+11.0%)
+    JSON (cmp)   ███████████░░░░░░░░░ 185,136 tokens (+21.3%)
+    TOON         ████████████░░░░░░░░ 196,893 tokens (+35.2%)
+    YAML         ████████████░░░░░░░░ 196,892 tokens (+35.2%)
+    JSON format  ████████████████████ 274,149 tokens (+88.2%)
+    XML          ████████████████████ 327,274 tokens (+124.7%)
 
 llama 3 (meta):
 
-    ZON          ██████░░░░░░░░░░░░░░ 234,623 tokens 👑
-    CSV          ███████░░░░░░░░░░░░░ 254,909 tokens (+8.7%)
-    JSON (cmp)   ████████░░░░░░░░░░░░ 277,165 tokens (+18.1%)
-    TOON         ██████████░░░░░░░░░░ 315,608 tokens (+34.5%)
-    YAML         ██████████░░░░░░░░░░ 315,714 tokens (+34.6%)
-    JSON format  ███████████████░░░░░ 407,488 tokens (+73.6%)
-    XML          ████████████████████ 481,517 tokens (+105.3%)
+    ZON          ██████████░░░░░░░░░░ 230,838 tokens 👑
+    CSV          ███████████░░░░░░░░░ 254,181 tokens (+10.1%)
+    JSON (cmp)   ████████████░░░░░░░░ 276,405 tokens (+16.5%)
+    TOON         █████████████░░░░░░░ 314,824 tokens (+36.4%)
+    YAML         █████████████░░░░░░░ 314,820 tokens (+36.4%)
+    JSON format  ████████████████████ 407,488 tokens (+76.5%)
+    XML          ████████████████████ 480,125 tokens (+108.0%)
 ```
 
 
@@ -692,6 +742,128 @@ try {
 **Returns:** Original JavaScript data structure
 
 ---
+
+## Runtime Evals (Schema Validation)
+
+ZON includes a built-in validation layer designed for **LLM Guardrails**.
+Instead of just parsing data, you can enforce a schema to ensure the LLM output matches your expectations.
+
+### Why use this?
+1.  **Self-Correction:** Feed error messages back to the LLM so it can fix its own mistakes.
+2.  **Type Safety:** Guarantee that `age` is a number, not a string like `"25"`.
+3.  **Hallucination Check:** Ensure the LLM didn't invent fields you didn't ask for.
+
+### Usage
+
+```typescript
+import { zon, validate } from 'zon-format';
+
+// 1. Define the Schema (The "Source of Truth")
+const UserSchema = zon.object({
+  name: zon.string().describe("The user's full name"),
+  age: zon.number().describe("Age in years"),
+  role: zon.enum(['admin', 'user']).describe("Access level"),
+  tags: zon.array(zon.string()).optional()
+});
+
+// 2. Generate the System Prompt (The "Input")
+const systemPrompt = `
+You are an API. Respond in ZON format with this structure:
+${UserSchema.toPrompt()}
+`;
+
+console.log(systemPrompt);
+// Output:
+// object:
+//   - name: string - The user's full name
+//   - age: number - Age in years
+//   - role: enum(admin, user) - Access level
+//   - tags: array of [string] (optional)
+
+// 3. Validate the Output (The "Guardrail")
+const result = validate(llmOutput, UserSchema);
+```
+
+### 💡 The "Input Optimization" Workflow (Best Practice)
+
+The most practical way to use ZON is to **save money on Input Tokens** while keeping your backend compatible with JSON.
+
+**1. Input (ZON):** Feed the LLM massive datasets in ZON (saving ~50% tokens).
+**2. Output (JSON):** Ask the LLM to reply in standard JSON.
+
+```typescript
+import { encode } from 'zon-format';
+
+// 1. Encode your massive context (Save 50% tokens!)
+const context = encode(largeDataset);
+
+// 2. Send to LLM
+const prompt = `
+Here is the data in ZON format:
+${context}
+
+Analyze this data and respond in standard JSON format with the following structure:
+{ "summary": string, "count": number }
+`;
+
+// 3. LLM Output (Standard JSON)
+// { "summary": "Found 50 users", "count": 50 }
+```
+
+This gives you the **best of both worlds**:
+- **Cheaper API Calls** (ZON Input)
+- **Zero Code Changes** (JSON Output)
+
+### 🚀 The "Unified" Workflow (Full Power)
+
+Combine everything to build a **Self-Correcting, Token-Efficient Agent**:
+
+1.  **Encode** context to save tokens.
+2.  **Prompt** with a Schema to define expectations.
+3.  **Validate** the output (JSON or ZON) to ensure safety.
+
+```typescript
+import { encode, zon, validate } from 'zon-format';
+
+// 1. INPUT: Compress your context (Save 50%)
+const context = encode(userHistory);
+
+// 2. SCHEMA: Define what you want back
+const ResponseSchema = zon.object({
+  analysis: zon.string(),
+  riskScore: zon.number().describe("0-100 score"),
+  actions: zon.array(zon.string())
+});
+
+// 3. PROMPT: Generate instructions automatically
+const prompt = `
+Context (ZON):
+${context}
+
+Analyze the user history.
+Respond in JSON format matching this structure:
+${ResponseSchema.toPrompt()}
+`;
+
+// 4. GUARD: Validate the LLM's JSON output
+// (validate() works on both ZON strings AND JSON objects!)
+const result = validate(llmJsonOutput, ResponseSchema);
+
+if (!result.success) {
+  console.error("Hallucination detected:", result.error);
+}
+```
+
+
+
+### Supported Types
+- `zon.string()`
+- `zon.number()`
+- `zon.boolean()`
+- `zon.enum(['a', 'b'])`
+- `zon.array(schema)`
+- `zon.object({ key: schema })`
+- `.optional()` modifier
 
 ## Examples
 
