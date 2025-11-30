@@ -77,7 +77,7 @@ describe('Security Limits (DOS Prevention)', () => {
   describe('Combined Limits', () => {
     test('should work with normal data within all limits', () => {
       const zonData = `
-metadata:"{version:1.0.4,env:prod}"
+metadata:"{version:1.0.5,env:prod}"
 users:@(3):id,name
 1,Alice
 2,Bob
@@ -87,7 +87,7 @@ tags:"[nodejs,typescript,llm]"
       
       const result = decode(zonData);
       expect(result.users).toHaveLength(3);
-      expect(result.metadata.version).toBe('1.0.4');
+      expect(result.metadata.version).toBe('1.0.5');
       expect(result.tags).toHaveLength(3);
     });
   });

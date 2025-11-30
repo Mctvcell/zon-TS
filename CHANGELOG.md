@@ -16,6 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Token Efficiency:** Achieved up to 23.8% reduction vs JSON (GPT-4o) thanks to syntax optimizations.
 - **Readability:** Cleaner, block-like structure for nested data.
 
+## [1.0.5] - 2025-11-30
+
+### Added
+- **Algorithmic Benchmark Generation**: Replaced LLM-based question generation with a deterministic algorithm for consistent, reproducible benchmarks.
+- **Expanded Dataset**: Added "products" and "feed" data to the unified dataset to simulate real-world e-commerce scenarios.
+- **Tricky Questions**: Introduced edge cases (non-existent fields, logic traps, case sensitivity) to stress-test LLM reasoning.
+- **Robust Benchmark Runner**: Added exponential backoff and rate limiting to handle Azure OpenAI S0 tier constraints.
+
+### Changed
+- **Benchmark Formats**: Refined tested formats to ZON, TOON, JSON, JSON (Minified), and CSV for focused analysis.
+- **Documentation**: Updated README and API references with the latest benchmark results (GPT-5 Nano) and accurate token counts.
+- **Token Efficiency**: Recalculated efficiency scores based on the expanded dataset, confirming ZON's leadership (1430.6 score).
+
+### Fixed
+- **Rate Limiting**: Resolved 429 errors during benchmarking by implementing robust retry logic and concurrency control.
+
 ## [2.0.4] - 2025-11-29
 
 ### Fixed

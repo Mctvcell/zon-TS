@@ -334,7 +334,7 @@ export class ZonEncoder {
   /**
    * Detect sequential columns (1, 2, 3, ..., N) for omission.
    * 
-   * NOTE: Disabled in v1.0.4 to improve LLM retrieval accuracy.
+   * NOTE: Disabled in v1.0.5 to improve LLM retrieval accuracy.
    * Implicit columns like [id] were being missed by LLMs.
    * Now all columns are explicit.
    */

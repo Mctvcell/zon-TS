@@ -121,39 +121,53 @@ class AzureAIClient {
       throw new Error(`Unknown model: ${modelName}. Available: ${Object.keys(this.models).join(', ')}`);
     }
     
-    try {
-      // Use openai SDK's standard API (works with Azure)
-      const response = await this.client.chat.completions.create({
-        model: deployment,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a data analyst. Answer questions about provided data accurately and concisely. Provide only the direct answer without explanation.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_completion_tokens: maxTokens, // Updated parameter name for newer models
-        // temperature: 1.0 // Some models enforce default temperature
-      });
-      
-      const answer = response.choices[0]?.message?.content?.trim() || '';
-      const tokensUsed = response.usage?.total_tokens || 0;
-      
-      const result = {answer, tokensUsed};
-      
-      // Cache the result only if valid
-      if (answer && answer.length > 0) {
-        this._setCache(modelName, prompt, result);
+    const MAX_RETRIES = 15;
+    let retries = 0;
+    
+    while (retries <= MAX_RETRIES) {
+      try {
+        // Use openai SDK's standard API (works with Azure)
+        const response = await this.client.chat.completions.create({
+          model: deployment,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a data analyst. Answer questions about provided data accurately and concisely. Provide only the direct answer without explanation.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_completion_tokens: maxTokens,
+        });
+        
+        const answer = response.choices[0]?.message?.content?.trim() || '';
+        const tokensUsed = response.usage?.total_tokens || 0;
+        
+        const result = {answer, tokensUsed};
+        
+        // Cache the result only if valid
+        if (answer && answer.length > 0) {
+          this._setCache(modelName, prompt, result);
+        }
+        
+        return {...result, cached: false};
+        
+      } catch (error) {
+        if (error.status === 429 && retries < MAX_RETRIES) {
+          retries++;
+          let delay = Math.pow(2, retries) * 1000 + (Math.random() * 1000); // Exponential backoff + jitter
+          if (delay > 60000) delay = 60000; // Cap at 60 seconds
+          
+          console.log(`      ⚠️  Rate limit hit for ${modelName}. Retrying in ${Math.round(delay)}ms (Attempt ${retries}/${MAX_RETRIES})...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        console.error(`Error querying ${modelName}:`, error.message);
+        throw error;
       }
-      
-      return {...result, cached: false};
-      
-    } catch (error) {
-      console.error(`Error querying ${modelName}:`, error.message);
-      throw error;
     }
   }
   

@@ -177,7 +177,7 @@ Find all in-stock Electronics with rating above 4.0.
 
 ````
 ```zon
-metadata:"{version:1.0.4,env:production,deployed:2025-01-15}"
+metadata:"{version:1.0.5,env:production,deployed:2025-01-15}"
 users:@(5):id,name,active
 1,Alice,T
 2,Bob,F

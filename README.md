@@ -90,7 +90,9 @@ hikes[3]{id,name,distanceKm,elevationGain,companion,wasSunny}:
 ZON conveys the same information with **even fewer tokens** than TOON – using compact table format with explicit headers:
 
 ```
-context:task:Our favorite hikes together,location:Boulder,season:spring_2025
+context.task:Our favorite hikes together
+context.location:Boulder
+context.season:spring_2025
 friends:ana,luis,sam
 hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny
 ana,7.5,320,1,Blue Lake Trail,T
@@ -185,17 +187,17 @@ Benchmarks test LLM comprehension using 24 data retrieval questions on gpt-5-nan
 Each format ranked by efficiency (accuracy percentage per 10,000 tokens):
 
 ```
-ZON            ████████████████████ 123.2 acc%/10K │ 100.0% acc │ 19,995 tokens 👑
-TOON           ███████████████████░ 118.0 acc%/10K │ 100.0% acc │ 20,988 tokens
-CSV            ███████████████████░ ~117 acc%/10K  │ 100.0% acc │ ~20,500 tokens
-JSON compact   ██████████████░░░░░░  82.1 acc%/10K │  91.7% acc │ 27,300 tokens
-JSON           ███████████░░░░░░░░░  78.5 acc%/10K │  91.7% acc │ 28,042 tokens
+ZON            ████████████████████ 1430.6 acc%/10K │  99.0% acc │ 692 tokens 👑
+CSV            ███████████████████░ 1386.5 acc%/10K │  99.0% acc │ 714 tokens
+JSON compact   ████████████████░░░░ 1143.4 acc%/10K │  91.7% acc │ 802 tokens
+TOON           ████████████████░░░░ 1132.7 acc%/10K │  99.0% acc │ 874 tokens
+JSON           ██████████░░░░░░░░░░  744.6 acc%/10K │  96.8% acc │ 1,300 tokens
 ```
 
 *Efficiency score = (Accuracy % ÷ Tokens) × 10,000. Higher is better.*
 
 > [!TIP]
-> ZON achieves **100% accuracy** (vs JSON's 91.7%) while using **29% fewer tokens** (19,995 vs 28,041).
+> ZON achieves **99.0% accuracy** while using **20.8% fewer tokens** than TOON and **13.7% fewer** than Minified JSON.
 
 #### Per-Model Comparison
 
@@ -203,10 +205,11 @@ Accuracy on the unified dataset with gpt-5-nano:
 
 ```
 gpt-5-nano (Azure OpenAI)
-→ ZON            ████████████████████  100.0% (24/24) │ 19,995 tokens
-  TOON           ████████████████████  100.0% (24/24) │ 20,988 tokens
-  JSON           ███████████████████░   95.8% (23/24) │ 28,041 tokens
-  JSON compact   ███████████████████░   91.7% (22/24) │ 27,300 tokens
+→ ZON            ████████████████████  99.0% (306/309) │ 692 tokens
+  TOON           ████████████████████  99.0% (306/309) │ 874 tokens
+  CSV            ████████████████████  99.0% (306/309) │ 714 tokens
+  JSON           ███████████████████░  96.8% (299/309) │ 1,300 tokens
+  JSON compact   ██████████████████░░  91.7% (283/309) │ 802 tokens
 ```
 
 > [!TIP]
@@ -671,7 +674,7 @@ config:"{database:{host:db.example.com,port:5432},features:{darkMode:T}}"
 ZON intelligently combines formats:
 
 ```
-metadata:"{version:1.0.4,env:production}"
+metadata:"{version:1.0.5,env:production}"
 users:@(5):id,name,active
 1,Alice,T
 2,Bob,F

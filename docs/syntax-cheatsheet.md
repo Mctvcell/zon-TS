@@ -2,7 +2,7 @@
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
-Quick reference for ZON format syntax. Cross-referenced with actual implementation in v1.0.4.
+Quick reference for ZON format syntax. Cross-referenced with actual implementation in v1.0.5.
 
 ## Basic Types
 
@@ -46,19 +46,15 @@ score:98.5
 
 ### Nested Objects
 
+**Colon-less Syntax (v2.0.5):**
 ```zon
-# Nested quoted
-config:"{database:{host:localhost,port:5432},cache:{ttl:3600,enabled:T}}"
+# Colon is optional if value starts with { or [
+config{database{host:localhost,port:5432},cache{ttl:3600,enabled:T}}
 ```
 
-**JSON equivalent:**
-```json
-{
-  "config": {
-    "database": { "host": "localhost", "port": 5432 },
-    "cache": { "ttl": 3600, "enabled": true }
-  }
-}
+**Legacy Quoted (v1.x):**
+```zon
+config:"{database:{host:localhost,port:5432}}"
 ```
 
 ---
@@ -254,12 +250,12 @@ path:"C:\\Users\\data"
 
 **ZON:**
 ```zon
-metadata:"{version:1.0.4,env:production}"
+metadata{version:1.0.5,env:production}
 users:@(3):active,id,loginCount,name
 T,1,42,Alice
 T,2,17,Bob
 F,3,3,Carol
-config:"{database:{host:localhost,port:5432}}"
+config.database{host:localhost,port:5432}
 ```
 
 **Token count:**

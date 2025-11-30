@@ -1,5 +1,5 @@
 /**
- * ZON Protocol Constants v1.0.4
+ * ZON Protocol Constants v1.0.5
  */
 
 // Format markers

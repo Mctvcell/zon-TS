@@ -26,7 +26,7 @@ const tson = require('cson');
 
 // Configuration
 const OUTPUT_FILE = path.join(__dirname, 'accuracy-results.json');
-const CONCURRENCY = 5; // Parallel requests per model
+const CONCURRENCY = 1; // Parallel requests per model
 
 // Initialize XML builder
 const xmlBuilder = new XMLBuilder({
@@ -52,6 +52,8 @@ function encodeData(data, format) {
         return tson.stringify(data);
       case 'JSON':
         return JSON.stringify(data, null, 2);
+      case 'JSON (Minified)':
+        return JSON.stringify(data);
       case 'YAML':
         return yaml.dump(data);
       case 'XML':
@@ -108,14 +110,14 @@ async function runBenchmark() {
   
   // Initialize client
   const client = new AzureAIClient();
-  const models = ['gpt-5-nano', 'deepseek-v3.1', 'grok-3', 'Llama-3.3-70B-Instruct'];
+  const models = ['deepseek-v3.1', 'grok-3', 'Llama-3.3-70B-Instruct'];
   
   // Get questions
   const allQuestions = require('./questions-309');
   const datasetName = 'unifiedDataset';
   
   // Formats to test
-  const formats = ['ZON', 'TOON', 'JSON', 'YAML', 'CSV', 'TSV', 'TSON', 'XML'];
+  const formats = ['ZON', 'TOON', 'JSON', 'JSON (Minified)', 'CSV'];
   
   // Results storage
   const results = {
@@ -202,6 +204,9 @@ async function runBenchmark() {
         for (let i = 0; i < questions.length; i += CONCURRENCY) {
           const batch = questions.slice(i, i + CONCURRENCY);
           const promises = batch.map(async (q) => {
+            // Throttle requests to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
             const prompt = buildPrompt(encodedData[format], format, q.q);
             
             try {

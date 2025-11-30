@@ -2,7 +2,7 @@
 
 ## Zero Overhead Notation - Formal Specification
 
-**Version:** 1.0.4
+**Version:** 1.0.5
 
 **Date:** 2025-11-28
 
@@ -67,7 +67,8 @@ https://www.rfc-editor.org/rfc/rfc4180
 17. [Internationalization](#16-internationalization)
 18. [Interoperability](#17-interoperability)
 19. [Media Type](#18-media-type)
-20. [Appendices](#appendices)
+20. [Error Handling](#19-error-handling)
+21. [Appendices](#appendices)
 
 ---
 
@@ -413,7 +414,7 @@ Quote strings if they:
 
 1. **Contain structural chars:** `,`, `:`, `[`, `]`, `{`, `}`, `"`
 2. **Match literal keywords:** `T`, `F`, `true`, `false`, `null`, `none`, `nil`
-3. **Look like numbers:** `123`, `3.14`, `1e6`
+3. **Look like PURE numbers:** `123`, `3.14`, `1e6` (Complex patterns like `192.168.1.1` or `v1.0.5` do NOT need quoting)
 4. **Have whitespace:** Leading/trailing spaces, internal spaces (MUST quote to preserve)
 5. **Are empty:** `""` (MUST quote to distinguish from `null`)
 6. **Contain escapes:** Newlines, tabs, quotes (MUST quote to prevent structure breakage)
@@ -704,9 +705,56 @@ Enforces:
 
 ---
 
-## 14. Strict Mode Errors
+## 14. Schema Validation (LLM Evals)
 
-### 14.1 Table Errors
+ZON includes a runtime schema validation library designed for LLM guardrails. It allows defining expected structures and validating LLM outputs against them.
+
+### 14.1 Schema Definition
+
+```typescript
+import { zon } from 'zon-format';
+
+const UserSchema = zon.object({
+  name: zon.string().describe("Full name"),
+  age: zon.number(),
+  role: zon.enum(['admin', 'user']),
+  tags: zon.array(zon.string()).optional()
+});
+```
+
+### 14.2 Prompt Generation
+
+Schemas can generate system prompts to guide LLMs:
+
+```typescript
+const prompt = UserSchema.toPrompt();
+// Output:
+// object:
+//   - name: string - Full name
+//   - age: number
+//   - role: enum(admin, user)
+//   - tags: array of [string] (optional)
+```
+
+### 14.3 Validation
+
+```typescript
+import { validate } from 'zon-format';
+
+const result = validate(llmOutputString, UserSchema);
+
+if (result.success) {
+  console.log(result.data); // Typed data
+} else {
+  console.error(result.error); // "Expected number at age, got string"
+}
+```
+
+---
+
+## 15. Strict Mode Errors
+
+### 15.1 Table Errors
 
 | Code | Error | Example |
 |------|-------|---------|
@@ -735,7 +783,7 @@ Enforces:
 
 ---
 
-## 15. Security Considerations
+## 17. Security Considerations
 
 ### 15.1 Resource Limits
 
@@ -764,7 +812,7 @@ ZON does not execute code. Applications MUST sanitize before:
 
 ---
 
-## 16. Internationalization
+## 18. Internationalization
 
 ### 16.1 Character Encoding
 
@@ -789,7 +837,7 @@ Full Unicode support:
 
 ---
 
-## 17. Interoperability
+## 19. Interoperability
 
 ### 17.1 JSON
 
@@ -825,7 +873,7 @@ Both are LLM-optimized; choose based on data shape.
 
 ---
 
-## 18. Media Type & File Extension
+## 20. Media Type & File Extension
 
 ### 18.1 File Extension
 

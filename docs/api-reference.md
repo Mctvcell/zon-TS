@@ -2,7 +2,7 @@
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
-Complete API documentation for `zon-format` v1.0.4.
+Complete API documentation for `zon-format` v1.0.5.
 
 ## Installation
 
@@ -120,6 +120,59 @@ const data = decode(zonData, { strict: false });
 - ✅ **Lossless**: Perfect reconstruction of original data
 - ✅ **Type preservation**: Numbers, booleans, null, strings
 - ✅ **100% accuracy**: No data loss or corruption
+
+---
+
+## Schema Validation API
+
+ZON provides a runtime schema validation library for LLM guardrails.
+
+### `zon` Builder
+
+Fluent API for defining schemas.
+
+```typescript
+import { zon } from 'zon-format';
+```
+
+#### Methods
+
+- **`zon.string()`**: Matches any string.
+- **`zon.number()`**: Matches any number (no NaN/Infinity).
+- **`zon.boolean()`**: Matches `true` or `false`.
+- **`zon.enum(values: string[])`**: Matches one of the provided string values.
+- **`zon.array(schema: ZonSchema)`**: Matches an array where every element matches `schema`.
+- **`zon.object(shape: Record<string, ZonSchema>)`**: Matches an object with the specified shape.
+
+#### Modifiers
+
+- **`.optional()`**: Marks a field as optional (can be `undefined` or missing).
+- **`.describe(text: string)`**: Adds a description for prompt generation.
+
+### `validate<T>(input: string | any, schema: ZonSchema<T>): ZonResult<T>`
+
+Validates input against a schema. Accepts either a raw ZON string (which it decodes) or a pre-decoded JavaScript object.
+
+**Returns:** `ZonResult<T>`
+```typescript
+type ZonResult<T> = 
+  | { success: true; data: T }
+  | { success: false; error: string; issues: ZonIssue[] };
+```
+
+**Example:**
+
+```typescript
+const UserSchema = zon.object({
+  name: zon.string(),
+  role: zon.enum(['admin', 'user'])
+});
+
+const result = validate(llmOutput, UserSchema);
+if (result.success) {
+  // result.data is typed as { name: string, role: 'admin' | 'user' }
+}
+```
 
 ---
 
@@ -320,14 +373,38 @@ testRoundTrip("hello");                        // ✅
 
 ### Token Efficiency
 
-Compared to JSON on typical LLM data:
+**Structure**: Mixed uniform tables + nested objects  
+**Questions**: 309 total (field retrieval, aggregation, filtering, structure awareness)
 
-| Format | Tokens | Savings |
-|--------|--------|---------|
-| JSON (formatted) | 28,042 | - |
-| JSON (compact) | 27,300 | 2.6% |
-| TOON | 20,988 | 25.1% |
-| **ZON** | **19,995** | **23.8%** 👑 |
+#### Efficiency Ranking (Accuracy per 10K Tokens)
+
+Each format ranked by efficiency (accuracy percentage per 10,000 tokens):
+
+```
+ZON            ████████████████████ 1430.6 acc%/10K │  99.0% acc │ 692 tokens 👑
+CSV            ███████████████████░ 1386.5 acc%/10K │  99.0% acc │ 714 tokens
+JSON compact   ████████████████░░░░ 1143.4 acc%/10K │  91.7% acc │ 802 tokens
+TOON           ████████████████░░░░ 1132.7 acc%/10K │  99.0% acc │ 874 tokens
+JSON           ██████████░░░░░░░░░░  744.6 acc%/10K │  96.8% acc │ 1,300 tokens
+```
+
+*Efficiency score = (Accuracy % ÷ Tokens) × 10,000. Higher is better.*
+
+> [!TIP]
+> ZON achieves **99.0% accuracy** while using **20.8% fewer tokens** than TOON and **13.7% fewer** than Minified JSON.
+
+#### Per-Model Comparison
+
+Accuracy on the unified dataset with gpt-5-nano:
+
+```
+gpt-5-nano (Azure OpenAI)
+→ ZON            ████████████████████  99.0% (306/309) │ 692 tokens
+  TOON           ████████████████████  99.0% (306/309) │ 874 tokens
+  CSV            ████████████████████  99.0% (306/309) │ 714 tokens
+  JSON           ███████████████████░  96.8% (299/309) │ 1,300 tokens
+  JSON compact   ██████████████████░░  91.7% (283/309) │ 802 tokens
+```
 
 **ZON is optimized for:**
 - ✅ Uniform arrays of objects (tables)
