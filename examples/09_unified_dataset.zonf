@@ -1,0 +1,16 @@
+config.cache{enabled:T,provider:redis,ttl:3600,nodes[redis-1,redis-2,redis-3]}
+config.database{host:db-primary.internal,port:5432,poolSize:50,timeout:30000,replicas[{host:db-read-1.internal,priority:10},{host:db-read-2.internal,priority:5}]}
+config.features{darkMode:T,betaAccess:F,analytics{enabled:T,sampleRate:0.5}}
+logs[{id:101,timestamp:2025-02-01T10:00:00Z,level:INFO,message:System startup,source:kernel},{id:102,timestamp:2025-02-01T10:00:05Z,level:INFO,message:Database connected,source:db-pool,latency:12},{id:103,timestamp:2025-02-01T10:01:20Z,level:WARN,message:High memory usage,source:monitor,usage:85},{id:104,timestamp:2025-02-01T10:05:00Z,level:ERROR,message:Connection timeout,source:api-gateway,requestId:req-abc-123},{id:105,timestamp:2025-02-01T10:10:00Z,level:INFO,message:Scheduled backup started,source:backup-service},{id:106,timestamp:2025-02-01T10:15:00Z,level:INFO,message:Scheduled backup completed,source:backup-service,duration:300}]
+metadata.location:us-east-1
+metadata.systemId:SYS-CORE-001
+metadata.tags[production,critical,web-cluster]
+metadata.uptime:1245600
+metadata.version:"2.5.0"
+
+users:@(5):active,id,lastLogin,loginCount,name,role
+T,1,2025-02-01T08:30:00Z,154,Alice Admin,admin
+T,2,2025-02-01T09:15:00Z,89,Bob Builder,dev
+F,3,2025-01-28T14:20:00Z,42,Charlie Check,qa
+T,4,2025-02-01T07:45:00Z,210,Dave Deploy,ops
+T,5,2025-02-01T10:00:00Z,5,Eve External,guest
