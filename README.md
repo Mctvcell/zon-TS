@@ -49,6 +49,98 @@ bun add zon-format
 
 ## Why ZON?
 
+AI is becoming cheaper and more accessible, but larger context windows allow for larger data inputs as well. **LLM tokens still cost money** – and standard JSON is verbose and token-expensive:
+
+> I dropped ZON into my agent swarm and my OpenAI bill fell off a cliff" – literally everyone who tried it this week
+
+**ZON is the only format that wins (or ties for first) on every single LLM.**
+
+```json
+{
+  "context": {
+    "task": "Our favorite hikes together",
+    "location": "Boulder",
+    "season": "spring_2025"
+  },
+  "friends": ["ana", "luis", "sam"],
+  "hikes": [
+    {
+      "id": 1,
+      "name": "Blue Lake Trail",
+      "distanceKm": 7.5,
+      "elevationGain": 320,
+      "companion": "ana",
+      "wasSunny": true
+    },
+    {
+      "id": 2,
+      "name": "Ridge Overlook",
+      "distanceKm": 9.2,
+      "elevationGain": 540,
+      "companion": "luis",
+      "wasSunny": false
+    },
+    {
+      "id": 3,
+      "name": "Wildflower Loop",
+      "distanceKm": 5.1,
+      "elevationGain": 180,
+      "companion": "sam",
+      "wasSunny": true
+    }
+  ]
+}
+```
+
+<details>
+<summary>TOON already conveys the same information with <strong>fewer tokens</strong>.</summary>
+
+```yaml
+context:
+  task: Our favorite hikes together
+  location: Boulder
+  season: spring_2025
+friends[3]: ana,luis,sam
+hikes[3]{id,name,distanceKm,elevationGain,companion,wasSunny}:
+  1,Blue Lake Trail,7.5,320,ana,true
+  2,Ridge Overlook,9.2,540,luis,false
+  3,Wildflower Loop,5.1,180,sam,true
+```
+
+</details>
+
+
+ZON conveys the same information with **even fewer tokens** than TOON – using compact table format with explicit headers:
+
+```
+context{location:Boulder,season:spring_2025,task:Our favorite hikes together}
+friends[ana,luis,sam]
+hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny
+ana,7.5,320,1,Blue Lake Trail,T
+luis,9.2,540,2,Ridge Overlook,F
+sam,5.1,180,3,Wildflower Loop,T
+```
+
+### 🛡️ Validation + 📉 Compression
+
+Building reliable LLM apps requires two things:
+1.  **Safety:** You need to validate outputs (like you do with Zod).
+2.  **Efficiency:** You need to compress inputs to save money.
+
+ZON is the only library that gives you **both in one package**.
+
+| Feature | Traditional Validation (e.g. Zod) | ZON |
+| :--- | :--- | :--- |
+| **Type Safety** | ✅ Yes | ✅ Yes |
+| **Runtime Validation** | ✅ Yes | ✅ Yes |
+| **Input Compression** | ❌ No | ✅ **Yes (Saves ~50%)** |
+| **Prompt Generation** | ❌ Plugins needed | ✅ **Built-in** |
+| **Bundle Size** | ~45kb | ⚡ **~5kb** |
+
+**The Sweet Spot:** Use ZON to **save money on Input Tokens** while keeping the strict safety you expect.
+
+---
+
 ### Benchmarks
 
 #### Retrieval Accuracy
@@ -225,96 +317,6 @@ Llama 3 (Meta) Summary:
 - ZON consistently outperforms TOON on every tokenizer (from 4.0% up to 56.6% savings).
 
 **Key Insight:** ZON is the only format that wins or nearly wins across all models & datasets.
-
-AI is becoming cheaper and more accessible, but larger context windows allow for larger data inputs as well. **LLM tokens still cost money** – and standard JSON is verbose and token-expensive:
-
-> I dropped ZON into my agent swarm and my OpenAI bill fell off a cliff" – literally everyone who tried it this week
-
-**ZON is the only format that wins (or ties for first) on every single LLM.**
-
-```json
-{
-  "context": {
-    "task": "Our favorite hikes together",
-    "location": "Boulder",
-    "season": "spring_2025"
-  },
-  "friends": ["ana", "luis", "sam"],
-  "hikes": [
-    {
-      "id": 1,
-      "name": "Blue Lake Trail",
-      "distanceKm": 7.5,
-      "elevationGain": 320,
-      "companion": "ana",
-      "wasSunny": true
-    },
-    {
-      "id": 2,
-      "name": "Ridge Overlook",
-      "distanceKm": 9.2,
-      "elevationGain": 540,
-      "companion": "luis",
-      "wasSunny": false
-    },
-    {
-      "id": 3,
-      "name": "Wildflower Loop",
-      "distanceKm": 5.1,
-      "elevationGain": 180,
-      "companion": "sam",
-      "wasSunny": true
-    }
-  ]
-}
-```
-
-<details>
-<summary>TOON already conveys the same information with <strong>fewer tokens</strong>.</summary>
-
-```yaml
-context:
-  task: Our favorite hikes together
-  location: Boulder
-  season: spring_2025
-friends[3]: ana,luis,sam
-hikes[3]{id,name,distanceKm,elevationGain,companion,wasSunny}:
-  1,Blue Lake Trail,7.5,320,ana,true
-  2,Ridge Overlook,9.2,540,luis,false
-  3,Wildflower Loop,5.1,180,sam,true
-```
-
-</details>
-
-
-ZON conveys the same information with **even fewer tokens** than TOON – using compact table format with explicit headers:
-
-```
-context{location:Boulder,season:spring_2025,task:Our favorite hikes together}
-friends[ana,luis,sam]
-hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny
-ana,7.5,320,1,Blue Lake Trail,T
-luis,9.2,540,2,Ridge Overlook,F
-sam,5.1,180,3,Wildflower Loop,T
-```
-
-### 🛡️ Validation + 📉 Compression
-
-Building reliable LLM apps requires two things:
-1.  **Safety:** You need to validate outputs (like you do with Zod).
-2.  **Efficiency:** You need to compress inputs to save money.
-
-ZON is the only library that gives you **both in one package**.
-
-| Feature | Traditional Validation (e.g. Zod) | ZON |
-| :--- | :--- | :--- |
-| **Type Safety** | ✅ Yes | ✅ Yes |
-| **Runtime Validation** | ✅ Yes | ✅ Yes |
-| **Input Compression** | ❌ No | ✅ **Yes (Saves ~50%)** |
-| **Prompt Generation** | ❌ Plugins needed | ✅ **Built-in** |
-| **Bundle Size** | ~45kb | ⚡ **~5kb** |
-
-**The Sweet Spot:** Use ZON to **save money on Input Tokens** while keeping the strict safety you expect.
 
 ---
 
