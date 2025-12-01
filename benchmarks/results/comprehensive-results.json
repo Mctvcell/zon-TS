@@ -1,0 +1,419 @@
+{
+  "byDataset": {
+    "smallSimpleUniformFlat": {
+      "gpt4o": {
+        "zon": 264,
+        "toon": 293,
+        "json": 465,
+        "savingsVsTOON": 9.9,
+        "savingsVsJSON": 43.2
+      },
+      "claude": {
+        "zon": 260,
+        "toon": 248,
+        "json": 438,
+        "savingsVsTOON": -4.8,
+        "savingsVsJSON": 40.6
+      },
+      "llama": {
+        "zon": 387,
+        "toon": 405,
+        "json": 635,
+        "savingsVsTOON": 4.4,
+        "savingsVsJSON": 39.1
+      }
+    },
+    "smallSimpleNonUniformFlat": {
+      "gpt4o": {
+        "zon": 141,
+        "toon": 318,
+        "json": 237,
+        "savingsVsTOON": 55.7,
+        "savingsVsJSON": 40.5
+      },
+      "claude": {
+        "zon": 153,
+        "toon": 250,
+        "json": 236,
+        "savingsVsTOON": 38.8,
+        "savingsVsJSON": 35.2
+      },
+      "llama": {
+        "zon": 209,
+        "toon": 371,
+        "json": 301,
+        "savingsVsTOON": 43.7,
+        "savingsVsJSON": 30.6
+      }
+    },
+    "smallSimpleUniformNestedUniform": {
+      "gpt4o": {
+        "zon": 604,
+        "toon": 888,
+        "json": 785,
+        "savingsVsTOON": 32,
+        "savingsVsJSON": 23.1
+      },
+      "claude": {
+        "zon": 666,
+        "toon": 799,
+        "json": 814,
+        "savingsVsTOON": 16.6,
+        "savingsVsJSON": 18.2
+      },
+      "llama": {
+        "zon": 737,
+        "toon": 1026,
+        "json": 966,
+        "savingsVsTOON": 28.2,
+        "savingsVsJSON": 23.7
+      }
+    },
+    "smallSimpleUniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 459,
+        "toon": 893,
+        "json": 705,
+        "savingsVsTOON": 48.6,
+        "savingsVsJSON": 34.9
+      },
+      "claude": {
+        "zon": 452,
+        "toon": 744,
+        "json": 684,
+        "savingsVsTOON": 39.2,
+        "savingsVsJSON": 33.9
+      },
+      "llama": {
+        "zon": 573,
+        "toon": 1026,
+        "json": 836,
+        "savingsVsTOON": 44.2,
+        "savingsVsJSON": 31.5
+      }
+    },
+    "smallSimpleNonuniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 246,
+        "toon": 421,
+        "json": 335,
+        "savingsVsTOON": 41.6,
+        "savingsVsJSON": 26.6
+      },
+      "claude": {
+        "zon": 264,
+        "toon": 356,
+        "json": 338,
+        "savingsVsTOON": 25.8,
+        "savingsVsJSON": 21.9
+      },
+      "llama": {
+        "zon": 344,
+        "toon": 521,
+        "json": 431,
+        "savingsVsTOON": 34,
+        "savingsVsJSON": 20.2
+      }
+    },
+    "smallSimpleNonuniformNestedUniform": {
+      "gpt4o": {
+        "zon": 107,
+        "toon": 220,
+        "json": 175,
+        "savingsVsTOON": 51.4,
+        "savingsVsJSON": 38.9
+      },
+      "claude": {
+        "zon": 115,
+        "toon": 183,
+        "json": 176,
+        "savingsVsTOON": 37.2,
+        "savingsVsJSON": 34.7
+      },
+      "llama": {
+        "zon": 131,
+        "toon": 242,
+        "json": 211,
+        "savingsVsTOON": 45.9,
+        "savingsVsJSON": 37.9
+      }
+    },
+    "mediumComplexUniformFlat": {
+      "gpt4o": {
+        "zon": 7687,
+        "toon": 8179,
+        "json": 12409,
+        "savingsVsTOON": 6,
+        "savingsVsJSON": 38.1
+      },
+      "claude": {
+        "zon": 7621,
+        "toon": 7778,
+        "json": 12355,
+        "savingsVsTOON": 2,
+        "savingsVsJSON": 38.3
+      },
+      "llama": {
+        "zon": 11157,
+        "toon": 12136,
+        "json": 16714,
+        "savingsVsTOON": 8.1,
+        "savingsVsJSON": 33.2
+      }
+    },
+    "mediumComplexNonUniformFlat": {
+      "gpt4o": {
+        "zon": 10649,
+        "toon": 16116,
+        "json": 13287,
+        "savingsVsTOON": 33.9,
+        "savingsVsJSON": 19.9
+      },
+      "claude": {
+        "zon": 11300,
+        "toon": 13818,
+        "json": 12997,
+        "savingsVsTOON": 18.2,
+        "savingsVsJSON": 13.1
+      },
+      "llama": {
+        "zon": 16051,
+        "toon": 20907,
+        "json": 18016,
+        "savingsVsTOON": 23.2,
+        "savingsVsJSON": 10.9
+      }
+    },
+    "mediumComplexUniformNestedUniform": {
+      "gpt4o": {
+        "zon": 8915,
+        "toon": 15204,
+        "json": 13056,
+        "savingsVsTOON": 41.4,
+        "savingsVsJSON": 31.7
+      },
+      "claude": {
+        "zon": 9073,
+        "toon": 13002,
+        "json": 13301,
+        "savingsVsTOON": 30.2,
+        "savingsVsJSON": 31.8
+      },
+      "llama": {
+        "zon": 12603,
+        "toon": 19118,
+        "json": 17868,
+        "savingsVsTOON": 34.1,
+        "savingsVsJSON": 29.5
+      }
+    },
+    "mediumComplexUniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 20457,
+        "toon": 21257,
+        "json": 23975,
+        "savingsVsTOON": 3.8,
+        "savingsVsJSON": 14.7
+      },
+      "claude": {
+        "zon": 20361,
+        "toon": 14474,
+        "json": 23424,
+        "savingsVsTOON": -40.7,
+        "savingsVsJSON": 13.1
+      },
+      "llama": {
+        "zon": 25897,
+        "toon": 22863,
+        "json": 29479,
+        "savingsVsTOON": -13.3,
+        "savingsVsJSON": 12.2
+      }
+    },
+    "mediumComplexNonuniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 9097,
+        "toon": 16695,
+        "json": 13763,
+        "savingsVsTOON": 45.5,
+        "savingsVsJSON": 33.9
+      },
+      "claude": {
+        "zon": 10254,
+        "toon": 14400,
+        "json": 13587,
+        "savingsVsTOON": 28.8,
+        "savingsVsJSON": 24.5
+      },
+      "llama": {
+        "zon": 14590,
+        "toon": 21666,
+        "json": 18262,
+        "savingsVsTOON": 32.7,
+        "savingsVsJSON": 20.1
+      }
+    },
+    "mediumComplexNonuniformNestedUniform": {
+      "gpt4o": {
+        "zon": 6749,
+        "toon": 12163,
+        "json": 9921,
+        "savingsVsTOON": 44.5,
+        "savingsVsJSON": 32
+      },
+      "claude": {
+        "zon": 6940,
+        "toon": 10504,
+        "json": 9595,
+        "savingsVsTOON": 33.9,
+        "savingsVsJSON": 27.7
+      },
+      "llama": {
+        "zon": 10917,
+        "toon": 17171,
+        "json": 14962,
+        "savingsVsTOON": 36.4,
+        "savingsVsJSON": 27
+      }
+    },
+    "largeComplexUniformFlat": {
+      "gpt4o": {
+        "zon": 107706,
+        "toon": 115466,
+        "json": 195426,
+        "savingsVsTOON": 6.7,
+        "savingsVsJSON": 44.9
+      },
+      "claude": {
+        "zon": 105213,
+        "toon": 110150,
+        "json": 191597,
+        "savingsVsTOON": 4.5,
+        "savingsVsJSON": 45.1
+      },
+      "llama": {
+        "zon": 159077,
+        "toon": 168725,
+        "json": 256680,
+        "savingsVsTOON": 5.7,
+        "savingsVsJSON": 38
+      }
+    },
+    "largeComplexNonUniformFlat": {
+      "gpt4o": {
+        "zon": 139739,
+        "toon": 242180,
+        "json": 197523,
+        "savingsVsTOON": 42.3,
+        "savingsVsJSON": 29.3
+      },
+      "claude": {
+        "zon": 160322,
+        "toon": 206915,
+        "json": 192969,
+        "savingsVsTOON": 22.5,
+        "savingsVsJSON": 16.9
+      },
+      "llama": {
+        "zon": 212048,
+        "toon": 297704,
+        "json": 253344,
+        "savingsVsTOON": 28.8,
+        "savingsVsJSON": 16.3
+      }
+    },
+    "largeComplexUniformNestedUniform": {
+      "gpt4o": {
+        "zon": 48631,
+        "toon": 139706,
+        "json": 109707,
+        "savingsVsTOON": 65.2,
+        "savingsVsJSON": 55.7
+      },
+      "claude": {
+        "zon": 50104,
+        "toon": 113607,
+        "json": 112360,
+        "savingsVsTOON": 55.9,
+        "savingsVsJSON": 55.4
+      },
+      "llama": {
+        "zon": 73665,
+        "toon": 182553,
+        "json": 146552,
+        "savingsVsTOON": 59.6,
+        "savingsVsJSON": 49.7
+      }
+    },
+    "largeComplexUniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 124029,
+        "toon": 158375,
+        "json": 155696,
+        "savingsVsTOON": 21.7,
+        "savingsVsJSON": 20.3
+      },
+      "claude": {
+        "zon": 124067,
+        "toon": 142322,
+        "json": 154288,
+        "savingsVsTOON": 12.8,
+        "savingsVsJSON": 19.6
+      },
+      "llama": {
+        "zon": 172639,
+        "toon": 208205,
+        "json": 218004,
+        "savingsVsTOON": 17.1,
+        "savingsVsJSON": 20.8
+      }
+    },
+    "largeComplexNonuniformNestedNonuniform": {
+      "gpt4o": {
+        "zon": 144890,
+        "toon": 224940,
+        "json": 188604,
+        "savingsVsTOON": 35.6,
+        "savingsVsJSON": 23.2
+      },
+      "claude": {
+        "zon": 166685,
+        "toon": 196893,
+        "json": 185136,
+        "savingsVsTOON": 15.3,
+        "savingsVsJSON": 10
+      },
+      "llama": {
+        "zon": 240643,
+        "toon": 314824,
+        "json": 276405,
+        "savingsVsTOON": 23.6,
+        "savingsVsJSON": 12.9
+      }
+    },
+    "largeComplexNonuniformNestedUniform": {
+      "gpt4o": {
+        "zon": 73685,
+        "toon": 149079,
+        "json": 118120,
+        "savingsVsTOON": 50.6,
+        "savingsVsJSON": 37.6
+      },
+      "claude": {
+        "zon": 81058,
+        "toon": 120220,
+        "json": 113963,
+        "savingsVsTOON": 32.6,
+        "savingsVsJSON": 28.9
+      },
+      "llama": {
+        "zon": 116523,
+        "toon": 190736,
+        "json": 160374,
+        "savingsVsTOON": 38.9,
+        "savingsVsJSON": 27.3
+      }
+    }
+  },
+  "summary": {}
+}

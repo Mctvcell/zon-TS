@@ -3,14 +3,14 @@
 [![npm version](https://img.shields.io/npm/v/zon-format.svg)](https://www.npmjs.com/package/zon-format)
 [![GitHub stars](https://img.shields.io/github/stars/ZON-Format/zon-TS?style=social)](https://github.com/ZON-Format/zon-TS)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-121%2F121%20passing-brightgreen.svg)](#quality--testing)
+[![Tests](https://img.shields.io/badge/tests-175%2F175%20passing-brightgreen.svg)](#quality--testing)
 [![npm downloads](https://img.shields.io/npm/dm/zon-format?color=red)](https://www.npmjs.com/package/zon-format)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 # ZON Format → JSON is dead. TOON was cute. ZON just won.
 **Zero Overhead Notation** - A compact, human-readable way to encode JSON for LLMs.
 
-**File Extension:** `.zonf` | **Media Type:** `text/zon` | **Encoding:** UTF-8
+**File Extension:** `.zonf` | **Media Type:** `text/zonf` | **Encoding:** UTF-8
 
 ZON is a token-efficient serialization format designed for LLM workflows. It achieves 35-50% token reduction vs JSON through tabular encoding, single-character primitives, and intelligent compression while maintaining 100% data fidelity.
 
@@ -23,6 +23,12 @@ Think of it like CSV for complex data - keeps the efficiency of tables where it 
 
 ```bash
 npm i zon-format
+# or
+pnpm add zon-format
+# or
+yarn add zon-format
+# or
+bun add zon-format
 ```
 
 > [!TIP]
@@ -180,41 +186,35 @@ llama 3 (meta):
 #### Overall Summary:
 
 ```
-GPT-4o (o200k):
+GPT-4o (o200k) Summary:
   ZON Wins: 2/2 datasets
-  
-  Total tokens across all datasets:
-    ZON:         147,267 👑
-    CSV:         165,647 (+12.5%)
-    JSON (cmp):  189,193 (+28.4%)
-    TOON:        225,510 (+53.1%)
-    
-  ZON vs TOON: -34.7% fewer tokens ✨
-  ZON vs JSON: -22.2% fewer tokens
+  Total Tokens:
+  ZON: █████████████░░░░░░░░░░░░░░░░░ 145,585 tokens
+       vs JSON (cmp): -23.1%
+       vs TOON:       -35.5%
+       vs CSV:        -14.1%
+       vs YAML:       -35.6%
+       vs XML:        -56.8%
 
-Claude 3.5 (Anthropic):
-  ZON Wins: 1/2 datasets
-  
-  Total tokens across all datasets:
-    ZON:         149,281 👑
-    CSV:         162,245 (+8.7%)
-    JSON (cmp):  185,732 (+24.4%)
-    TOON:        197,463 (+32.3%)
-    
-  ZON vs TOON: -24.4% fewer tokens ✨
-  ZON vs JSON: -19.6% fewer tokens
+Claude 3.5 (Anthropic) Summary:
+  ZON Wins: 0/2 datasets
+  Total Tokens:
+  ZON: ███████████████░░░░░░░░░░░░░░░ 167,445 tokens
+       vs JSON (cmp): -10.0%
+       vs TOON:       -15.3%
+       vs CSV:        +1.6%
+       vs YAML:       -15.3%
+       vs XML:        -49.1%
 
-Llama 3 (Meta):
+Llama 3 (Meta) Summary:
   ZON Wins: 2/2 datasets
-  
-  Total tokens across all datasets:
-    ZON:         234,623 👑
-    CSV:         254,909 (+8.7%)
-    JSON (cmp):  277,165 (+18.1%)
-    TOON:        315,608 (+34.5%)
-    
-  ZON vs TOON: -25.7% fewer tokens ✨
-  ZON vs JSON: -15.3% fewer tokens
+  Total Tokens:
+  ZON: ███████████████░░░░░░░░░░░░░░░ 241,579 tokens
+       vs JSON (cmp): -12.9%
+       vs TOON:       -23.5%
+       vs CSV:        -6.2%
+       vs YAML:       -23.6%
+       vs XML:        -49.9%
 ```
 
 **Key Insights:**
@@ -566,6 +566,12 @@ ZON is ready for deployment in LLM applications requiring:
 
 ```bash
 npm install zon-format
+# or
+pnpm add zon-format
+# or
+yarn add zon-format
+# or
+bun add zon-format
 ```
 
 **Example usage:**
@@ -675,7 +681,7 @@ config{database{host:db.example.com,port:5432},features{darkMode:T}}
 ZON intelligently combines formats:
 
 ```
-metadata{env:production,version:1.0.5}
+metadata{env:production,version:1.1.0}
 users:@(5):id,name,active
 1,Alice,T
 2,Bob,F
@@ -900,41 +906,85 @@ Quick reference for ZON format syntax with practical examples.
 
 ---
 
-### 🔧 [API Reference](./docs/api-reference.md)
-Complete API documentation for `zon-format` v1.0.4.
+## Documentation
 
-**What's inside:**
-- `encode()` function - detailed parameters and examples
-- `decode()` function - detailed parameters and examples
-- TypeScript type definitions
-### 📘 [Complete Specification](./SPEC.md)
+Comprehensive guides for every aspect of ZON:
 
-Comprehensive formal specification including:
-- Data model and encoding rules
-- Security model (DOS prevention, no eval)
-- Data type system and preservation guarantees
-- Conformance checklists
-- Media type specification (`.zonf`, `text/zon`)
-- Examples and appendices
+### 📖 Core Documentation
 
-### 📚 Other Documentation
+- **[Complete Specification (SPEC.md)](./SPEC.md)** - Formal specification of the ZON format
+  - Data model and encoding rules
+  - Security model (DOS prevention, no eval)
+  - Data type system and preservation guarantees
+  - Media type specification (`.zonf`, `text/zonf`)
 
-- **[API Reference](./docs/api-reference.md)** - Encoder/decoder API, options, error codes
+- **[API Reference](./docs/api-reference.md)** - Complete API documentation
+  - `encode()` / `decode()` functions
+  - `ZonEncoder` / `ZonDecoder` classes
+  - Streaming APIs
+  - Integration modules
+  - TypeScript type definitions
+  - Error codes
+
 - **[Syntax Cheatsheet](./docs/syntax-cheatsheet.md)** - Quick reference guide
-- **[LLM Best Practices](./docs/llm-best-practices.md)** - Using ZON with LLMs
+  - All ZON syntax at a glance
+  - Primitives, objects, arrays, tables
+  - Special features (delta, dictionary, metadata)
 
-Guide for maximizing ZON's effectiveness in LLM applications.
+### 🚀 Feature Guides
 
-**What's inside:**
-- Prompting strategies for LLMs
-- Common use cases (data retrieval, aggregation, filtering)
-- Optimization tips for token usage
-- Advanced patterns (multi-table structures, nested configs)
-- Testing LLM comprehension
-- Model-specific tips (GPT-4, Claude, Llama)
-- Complete real-world examples
+- **[Advanced Features](./docs/advanced-features.md)** - Optimization techniques
+  - Delta Encoding for sequential data
+  - Dictionary Compression for repeated values
+  - Type Coercion for LLM outputs
+  - LLM-Aware Field Ordering
+  - Hierarchical Sparse Encoding
 
-**Perfect for:** LLM integration, prompt engineering, production deployments
+- **[Streaming Guide](./docs/streaming-guide.md)** - Processing large datasets
+  - `ZonStreamEncoder` / `ZonStreamDecoder`
+  - Memory-efficient processing
+  - Real-time pipelines
+  - File and HTTP streaming examples
+
+- **[Schema Validation](./docs/schema-validation.md)** - Runtime type checking
+  - `zon.object()`, `zon.string()`, `zon.number()`
+  - LLM guardrails and self-correction
+  - Prompt generation from schemas
+  - Common validation patterns
+
+### 🤖 LLM & Integrations
+
+- **[LLM Best Practices](./docs/llm-best-practices.md)** - Maximize LLM effectiveness
+  - Prompting strategies
+  - Token usage optimization
+  - Model-specific tips (GPT-4, Claude, Llama)
+  - Real-world examples
+
+- **[Integrations Guide](./docs/integrations.md)** - Framework integrations
+  - **LangChain**: `ZonOutputParser`
+  - **Vercel AI SDK**: `streamZon` for Next.js
+  - **OpenAI**: `ZOpenAI` wrapper
+  - Code examples for each
+
+- **[ZON vs TOON](./docs/ZON_VS_TOON.md)** - Feature comparison
+  - Why ZON is a superset of TOON
+  - Unique advantages
+  - Performance differences
+
+### 🛠️ Tools
+
+- **[CLI Guide](./docs/cli-guide.md)** - Command-line interface
+  - `zon encode` / `decode` / `convert`
+  - `zon validate` / `stats` / `format`
+  - Pipeline examples
+  - CI/CD integration
+
+### 📊 Performance
+
+- **[Benchmarks](./BENCHMARKS.md)** - Performance metrics
+  - Token efficiency vs JSON/MsgPack
+  - Encode/decode speed
+  - Size comparisons
 
 ---
 

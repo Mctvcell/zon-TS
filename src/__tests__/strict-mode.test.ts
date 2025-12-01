@@ -1,5 +1,5 @@
 import { decode, DecodeOptions } from '../index';
-import { ZonDecodeError } from '../exceptions';
+import { ZonDecodeError } from '../core/exceptions';
 
 describe('Strict Mode Validation', () => {
   describe('E001: Row Count Mismatch', () => {

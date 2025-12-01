@@ -1,7 +1,7 @@
-export { encode, ZonEncoder } from './encoder';
-export { decode, ZonDecoder, DecodeOptions } from './decoder';
-export { ZonDecodeError, ZonDecodeErrorDetails } from './exceptions';
-export * from './schema';
-export * from './splitter';
-export * from './stream';
-export * as constants from './constants';
+export { encode, ZonEncoder } from './core/encoder';
+export { decode, ZonDecoder, DecodeOptions } from './core/decoder';
+export { ZonDecodeError, ZonDecodeErrorDetails } from './core/exceptions';
+export * from './schema/schema';
+export * from './tools/splitter';
+export * from './core/stream';
+export * as constants from './core/constants';

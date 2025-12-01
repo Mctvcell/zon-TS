@@ -1,6 +1,6 @@
 import { decode } from '../index';
-import { ZonDecodeError } from '../exceptions';
-import { MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS } from '../constants';
+import { ZonDecodeError } from '../core/exceptions';
+import { MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS } from '../core/constants';
 
 describe('Security Limits (DOS Prevention)', () => {
   describe('E301: Document Size Limit', () => {
@@ -68,7 +68,7 @@ describe('Security Limits (DOS Prevention)', () => {
   describe('Combined Limits', () => {
     test('should work with normal data within all limits', () => {
       const zonData = `
-metadata:"{version:1.0.5,env:prod}"
+metadata:"{version:1.1.0,env:prod}"
 users:@(3):id,name
 1,Alice
 2,Bob
@@ -78,7 +78,7 @@ tags:"[nodejs,typescript,llm]"
       
       const result = decode(zonData);
       expect(result.users).toHaveLength(3);
-      expect(result.metadata.version).toBe('1.0.5');
+      expect(result.metadata.version).toBe('1.1.0');
       expect(result.tags).toHaveLength(3);
     });
   });

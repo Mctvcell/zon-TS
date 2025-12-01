@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-01
+
+### Major Release: Ecosystem Integrations & Streaming
+
+This release transforms ZON into a production-ready format with first-class support for modern AI frameworks and streaming workflows.
+
+### Added
+
+#### Phase 5: Ecosystem Integrations
+- **LangChain Integration** (`zon-format/langchain`): `ZonOutputParser` for seamless LLM chain integration
+- **Vercel AI SDK Integration** (`zon-format/ai-sdk`): `streamZon` helper for Next.js streaming UI
+- **OpenAI Helper** (`zon-format/openai`): `ZOpenAI` wrapper with automatic format injection
+
+#### Phase 4: Developer Experience
+- **VS Code Extension**: Syntax highlighting for `.zon` and `.zonf` files
+- **Performance Benchmarks**: Automated benchmark suite comparing ZON vs JSON/MsgPack
+- **CLI Enhancements**: `validate`, `stats`, and `format` commands
+
+#### Phase 3: Streaming & Utilities
+- **Streaming APIs**: `ZonStreamEncoder` and `ZonStreamDecoder` for memory-efficient processing
+- **Browser/Edge Support**: Verified compatibility with Cloudflare Workers and Vercel Edge
+- **CLI Tools**: Complete command-line interface for file operations
+
+#### Advanced Features (Phases 1-2)
+- **Runtime Schema Validation**: Type-safe parsing with `zon.object()`, `zon.string()`, etc.
+- **Dictionary Compression**: Automatic deduplication of repeated string values
+- **Delta Encoding**: Sequential numeric columns compressed with delta notation
+- **Type Coercion**: Intelligent handling of LLM-generated "stringified" values
+- **LLM-Aware Field Ordering**: `encodeLLM` optimizes field order for task type
+
+### Documentation
+- **5 New Comprehensive Guides**: Streaming, Integrations, CLI, Schema Validation, Advanced Features
+- **Updated README**: Professional documentation section with organized navigation
+- **Enhanced API Reference**: Added streaming and integration APIs
+- **Updated Syntax Cheatsheet**: Added dictionary and metadata syntax
+
+### Fixed
+- **Dictionary Round-trip Bug**: Fixed regex pattern to support dotted column names (e.g., `recipient.city[3]`)
+- **Test Suite**: All 175 tests passing (up from 121)
+
+### Performance
+- **Token Efficiency**: 16-19% fewer tokens than JSON
+- **LLM Accuracy**: 100% retrieval accuracy maintained
+- **Round-trip Integrity**: 100% across all 18 comprehensive test datasets
+
 ## [1.0.5] - 2025-12-01
 
 ### Added

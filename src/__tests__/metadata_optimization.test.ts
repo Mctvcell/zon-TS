@@ -1,5 +1,5 @@
-import { ZonEncoder } from '../encoder';
-import { ZonDecoder } from '../decoder';
+import { ZonEncoder } from '../core/encoder';
+import { ZonDecoder } from '../core/decoder';
 
 describe('Metadata Optimization', () => {
   let encoder: ZonEncoder;

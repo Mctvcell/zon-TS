@@ -2,7 +2,7 @@
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
-Complete API documentation for `zon-format` v1.0.5.
+Complete API documentation for `zon-format` v1.1.0.
 
 ## Installation
 
@@ -39,7 +39,7 @@ console.log(encoded);
 ```
 
 **Output:**
-```zon
+```zonf
 users:@(2):active,id,name
 T,1,Alice
 F,2,Bob
@@ -283,7 +283,7 @@ const data = decode(zonString, { strict: false });
 ```typescript
 const data = {
   name: "ZON Format",
-  version: "1.0.4",
+  version: "1.1.0",
   active: true,
   score: 98.5
 };
@@ -292,10 +292,10 @@ const encoded = encode(data);
 // active:T
 // name:ZON Format
 // score:98.5
-// version:"1.0.4"
+// version:"1.1.0"
 
 const decoded = decode(encoded);
-// { name: "ZON Format", version: "1.0.4", active: true, score: 98.5 }
+// { name: "ZON Format", version: "1.1.0", active: true, score: 98.5 }
 ```
 
 ### Example 2: Uniform Table
@@ -499,6 +499,93 @@ const toonString = encodeToon(data); // TOON format
 
 // Both are valid, ZON is 4-15% more compact
 ```
+
+---
+
+## Streaming APIs
+
+### `ZonStreamEncoder`
+
+**Introduced:** v1.1.0
+
+Encodes data streams into ZON format incrementally, ideal for large datasets.
+
+```typescript
+import { ZonStreamEncoder } from 'zon-format';
+
+const encoder = new ZonStreamEncoder();
+
+async function* generateData() {
+  for (let i = 0; i < 1000000; i++) {
+    yield { id: i, name: `Item ${i}` };
+  }
+}
+
+for await (const chunk of encoder.encode(generateData())) {
+  process.stdout.write(chunk);
+}
+```
+
+**See:** [Streaming Guide](./streaming-guide.md)
+
+### `ZonStreamDecoder`
+
+**Introduced:** v1.1.0
+
+Decodes ZON streams incrementally.
+
+```typescript
+import { ZonStreamDecoder } from 'zon-format';
+
+const decoder = new ZonStreamDecoder();
+
+for await (const obj of decoder.decode(readFileStream('data.zonf'))) {
+  console.log(obj);
+}
+```
+
+**See:** [Streaming Guide](./streaming-guide.md)
+
+---
+
+## Integration APIs
+
+### LangChain
+
+**Module:** `zon-format/langchain`
+
+```typescript
+import { ZonOutputParser } from 'zon-format/langchain';
+
+const parser = new ZonOutputParser();
+const instructions = parser.getFormatInstructions();
+const result = await parser.parse(llmOutput);
+```
+
+### Vercel AI SDK
+
+**Module:** `zon-format/ai-sdk`
+
+```typescript
+import { streamZon } from 'zon-format/ai-sdk';
+
+for await (const obj of streamZon(textStream)) {
+  console.log(obj);
+}
+```
+
+### OpenAI
+
+**Module:** `zon-format/openai`
+
+```typescript
+import { createZOpenAI } from 'zon-format/openai';
+
+const client = createZOpenAI(apiKey);
+const data = await client.chat({ model: 'gpt-4', messages: [...] });
+```
+
+**See:** [Integrations Guide](./integrations.md)
 
 ---
 

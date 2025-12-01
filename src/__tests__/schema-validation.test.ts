@@ -1,5 +1,5 @@
-import { zon, validate } from '../schema';
-import { encode } from '../encoder';
+import { zon, validate } from '../schema/schema';
+import { encode } from '../core/encoder';
 
 describe('Enhanced Schema Validation', () => {
   describe('String Validation', () => {

@@ -1,4 +1,4 @@
-import { ZonOutputParser } from '../langchain';
+import { ZonOutputParser } from '../integrations/langchain';
 
 describe('ZonOutputParser', () => {
   const parser = new ZonOutputParser();

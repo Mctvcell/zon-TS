@@ -1,7 +1,7 @@
-import { LLMOptimizer } from '../llm-optimizer';
-import { TokenCounter } from '../token-counter';
-import { encodeLLM, LLMContext } from '../encoder';
-import { ZonDecoder } from '../decoder';
+import { LLMOptimizer } from '../tools/llm-optimizer';
+import { TokenCounter } from '../tools/token-counter';
+import { encodeLLM, LLMContext } from '../core/encoder';
+import { ZonDecoder } from '../core/decoder';
 
 describe('LLM-Aware Optimizations', () => {
   describe('TokenCounter', () => {

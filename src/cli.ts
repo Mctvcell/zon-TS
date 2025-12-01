@@ -13,6 +13,9 @@ if (!command || !inputFile) {
   process.exit(1);
 }
 
+/**
+ * Prints usage instructions to stderr.
+ */
 function printUsage() {
   console.error('Usage: zon <command> <file> [options]');
   console.error('Commands:');
@@ -26,6 +29,12 @@ function printUsage() {
   console.error('  --format <json|csv|yaml>  Explicitly specify input format');
 }
 
+/**
+ * Parses CSV content into an array of objects.
+ * 
+ * @param content - CSV string content
+ * @returns Array of parsed objects
+ */
 function parseCSV(content: string): any[] {
   const lines = content.split(/\r?\n/).filter(line => line.trim());
   if (lines.length === 0) return [];
@@ -35,7 +44,6 @@ function parseCSV(content: string): any[] {
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    // Basic CSV regex to handle quoted commas
     const values: string[] = [];
     let inQuote = false;
     let currentValue = '';
@@ -57,12 +65,10 @@ function parseCSV(content: string): any[] {
     headers.forEach((header, index) => {
       let val = values[index]?.trim();
       if (val) {
-         // Remove quotes if present
         if (val.startsWith('"') && val.endsWith('"')) {
           val = val.slice(1, -1);
         }
         
-        // Type inference
         if (val === 'true') obj[header] = true;
         else if (val === 'false') obj[header] = false;
         else if (val === 'null') obj[header] = null;

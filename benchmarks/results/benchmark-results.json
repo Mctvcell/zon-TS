@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Unified Dataset",
+    "results": {
+      "GPT-4o (o200k)": {
+        "winner": "ZON",
+        "tokens": {
+          "ZON": 695,
+          "TOON": 874,
+          "CSV": 728,
+          "YAML": 989,
+          "XML": 1508,
+          "JSON": 1300,
+          "JSON (compact)": 802
+        }
+      },
+      "Claude 3.5 (Anthropic)": {
+        "winner": "CSV",
+        "tokens": {
+          "ZON": 760,
+          "TOON": 799,
+          "CSV": 750,
+          "YAML": 869,
+          "XML": 1527,
+          "JSON": 1270,
+          "JSON (compact)": 812
+        }
+      },
+      "Llama 3 (Meta)": {
+        "winner": "ZON",
+        "tokens": {
+          "ZON": 936,
+          "TOON": 1089,
+          "CSV": 983,
+          "YAML": 1203,
+          "XML": 1913,
+          "JSON": 1686,
+          "JSON (compact)": 1028
+        }
+      }
+    },
+    "bytes": {
+      "ZON": 1943,
+      "TOON": 2451,
+      "CSV": 1947,
+      "YAML": 2858,
+      "XML": 4480,
+      "JSON": 4026,
+      "JSONCompact": 2600
+    }
+  },
+  {
+    "name": "Large Complex Nested Dataset",
+    "results": {
+      "GPT-4o (o200k)": {
+        "winner": "ZON",
+        "tokens": {
+          "ZON": 144765,
+          "TOON": 224940,
+          "CSV": 168667,
+          "YAML": 224938,
+          "XML": 335239,
+          "JSON": 284532,
+          "JSON (compact)": 188604
+        }
+      },
+      "Claude 3.5 (Anthropic)": {
+        "winner": "CSV",
+        "tokens": {
+          "ZON": 166685,
+          "TOON": 196893,
+          "CSV": 164077,
+          "YAML": 196892,
+          "XML": 327274,
+          "JSON": 274028,
+          "JSON (compact)": 185136
+        }
+      },
+      "Llama 3 (Meta)": {
+        "winner": "ZON",
+        "tokens": {
+          "ZON": 240643,
+          "TOON": 314824,
+          "CSV": 256557,
+          "YAML": 314820,
+          "XML": 480125,
+          "JSON": 405211,
+          "JSON (compact)": 276405
+        }
+      }
+    },
+    "bytes": {
+      "ZON": 339411,
+      "TOON": 607194,
+      "CSV": 372184,
+      "YAML": 607189,
+      "XML": 1016540,
+      "JSON": 834132,
+      "JSONCompact": 551854
+    }
+  }
+]

@@ -1,5 +1,5 @@
-import { ZonSplitter } from '../splitter';
-import { decode } from '../decoder';
+import { ZonSplitter } from '../tools/splitter';
+import { decode } from '../core/decoder';
 
 describe('ZonSplitter', () => {
   const generateData = (count: number) => {

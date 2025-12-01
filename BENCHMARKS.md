@@ -1,7 +1,7 @@
 # ZON Performance Benchmarks
 
 **Date:** 2025-12-01
-**Version:** v1.0.5
+**Version:** v1.1.0
 **Environment:** Node.js (macOS)
 
 ## Overview
@@ -54,5 +54,5 @@ We compared ZON against JSON (native) and MsgPack (`msgpack-lite`) across three 
 Benchmarks were run using `benchmarks/performance.ts`.
 - **JSON**: `JSON.stringify` / `JSON.parse`
 - **MsgPack**: `msgpack-lite`
-- **ZON**: `zon-format` v1.0.5
+- **ZON**: `zon-format` v1.1.0
 - **Tokens**: Measured using `gpt-tokenizer` (GPT-3.5/4 encoding).

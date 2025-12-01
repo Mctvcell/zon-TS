@@ -1,7 +1,7 @@
 # ZON vs TOON: A Comprehensive Comparison
 
 **Date:** 2025-12-01
-**Version:** ZON v1.0.5
+**Version:** ZON v1.1.0
 
 ## Executive Summary
 

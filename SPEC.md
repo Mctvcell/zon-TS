@@ -2,9 +2,9 @@
 
 ## Zero Overhead Notation - Formal Specification
 
-**Version:** 1.0.5
+**Version:** 1.1.0
 
-**Date:** 2025-11-28
+**Date:** 2025-12-01
 
 **Status:** Stable Release
 
@@ -20,7 +20,7 @@ Zero Overhead Notation (ZON) is a compact, line-oriented text format that encode
 
 ## Status of This Document
 
-This document is a **Stable Release v1.0.5** and defines normative behavior for ZON encoders, decoders, and validators. Implementation feedback should be reported at https://github.com/ZON-Format/zon-TS.
+This document is a **Stable Release v1.1.0** and defines normative behavior for ZON encoders, decoders, and validators. Implementation feedback should be reported at https://github.com/ZON-Format/zon-TS.
 
 Backward compatibility is maintained across v1.0.x releases. Major versions (v2.x) may introduce breaking changes.
 
@@ -110,7 +110,7 @@ ZON addresses token bloat in JSON while maintaining structural fidelity. By decl
 ```
 
 **ZON (64 chars, 46% reduction):**
-```zon
+```zonf
 users:@(2):active,id,name
 T,1,Alice
 F,2,Bob
@@ -306,20 +306,20 @@ ZON documents are line-oriented:
 Determined by first non-empty line:
 
 **Root table:**
-```zon
+```zonf
 @(2):id,name
 1,Alice
 2,Bob
 ```
 
 **Root object:**
-```zon
+```zonf
 name:Alice
 age:30
 ```
 
 **Root primitive:**
-```zon
+```zonf
 42
 ```
 
@@ -377,7 +377,7 @@ number       = ["-"] 1*DIGIT ["." 1*DIGIT] [("e"/"E") ["+"/"-"] 1*DIGIT]
 ### 6.3 Numbers
 
 **Examples:**
-```zon
+```zonf
 age:30
 price:19.99
 score:-42
@@ -401,10 +401,10 @@ large:1000000
 Pattern: `^[a-zA-Z0-9_\-\.]+$`
 
 **Examples:**
-```zon
+```zonf
 name:Alice
 user_id:u123
-version:v1.0.4
+version:v1.1.0
 api-key:sk_test_key
 ```
 
@@ -414,13 +414,13 @@ Quote strings if they:
 
 1. **Contain structural chars:** `,`, `:`, `[`, `]`, `{`, `}`, `"`
 2. **Match literal keywords:** `T`, `F`, `true`, `false`, `null`, `none`, `nil`
-3. **Look like PURE numbers:** `123`, `3.14`, `1e6` (Complex patterns like `192.168.1.1` or `v1.0.5` do NOT need quoting)
+3. **Look like PURE numbers:** `123`, `3.14`, `1e6` (Complex patterns like `192.168.1.1` or `v1.1.0` do NOT need quoting)
 4. **Have whitespace:** Leading/trailing spaces, internal spaces (MUST quote to preserve)
 5. **Are empty:** `""` (MUST quote to distinguish from `null`)
 6. **Contain escapes:** Newlines, tabs, quotes (MUST quote to prevent structure breakage)
 
 **Examples:**
-```zon
+```zonf
 message:"Hello, world"
 path:"C:\Users\file"
 empty:""
@@ -432,7 +432,7 @@ spaces:" padded "
 ### 7.3 ISO Date Optimization
 
 ISO 8601 dates MAY be unquoted:
-```zon
+```zonf
 created:2025-11-28
 timestamp:2025-11-28T10:00:00Z
 time:10:30:00
@@ -446,7 +446,7 @@ Decoders interpret these as strings (not parsed as Date objects unless applicati
 
 ### 8.1 Flat Objects
 
-```zon
+```zonf
 active:T
 age:30
 name:Alice
@@ -461,24 +461,24 @@ Decodes to:
  
  Grouped object notation (preferred):
  
- ```zon
+ ```zonf
  config{database{host:localhost,port:5432},cache{ttl:3600}}
  ```
  
  Quoted compound notation (legacy/alternative):
  
- ```zon
+ ```zonf
  config:"{database:{host:localhost,port:5432},cache:{ttl:3600}}"
  ```
  
  Alternatively using JSON string:
- ```zon
+ ```zonf
  config:"{"database":{"host":"localhost","port":5432}}"
  ```
 
 ### 8.3 Empty Objects
 
-```zon
+```zonf
 metadata:"{}"
 ```
 
@@ -496,7 +496,7 @@ metadata:"{}"
 ### 9.2 Inline Arrays
 
 **Primitive arrays:**
-```zon
+```zonf
 tags:"[nodejs,typescript,llm]"
 numbers:"[1,2,3,4,5]"
 flags:"[T,F,T]"
@@ -504,7 +504,7 @@ mixed:"[hello,123,T,null]"
 ```
 
 **Empty:**
-```zon
+```zonf
 items:"[]"
 ```
 
@@ -551,7 +551,7 @@ users:@(2):active,id,name
 
 Columns SHOULD be sorted alphabetically:
 
-```zon
+```zonf
 users:@(2):active,id,name,role
 T,1,Alice,admin
 F,2,Bob,user
@@ -561,7 +561,7 @@ F,2,Bob,user
 
 Each row is comma-separated values:
 
-```zon
+```zonf
 T,1,Alice,admin
 ```
 
@@ -575,7 +575,7 @@ T,1,Alice,admin
 
 Optional fields append as `key:value`:
 
-```zon
+```zonf
 users:@(3):id,name
 1,Alice
 2,Bob,role:admin,score:98
@@ -587,13 +587,13 @@ users:@(3):id,name
 {"id": 2, "name": "Bob", "role": "admin", "score": 98}
 ```
 
-### 10.5 Delta Encoding (v1.0.5)
+### 10.5 Delta Encoding (v1.1.0)
  
  Sequential numeric columns can be delta-encoded to save tokens.
  
  **Header Syntax:** `key:@(N):col1,col2:delta`
  
- ```zon
+ ```zonf
  timeseries:@(3):ts:delta,val
  1000,10
  +60,12
@@ -609,11 +609,11 @@ users:@(3):id,name
  ]
  ```
  
- ### 10.6 Hierarchical Sparse Encoding (v1.0.5)
+ ### 10.6 Hierarchical Sparse Encoding (v1.1.0)
  
  Nested objects in tables are flattened using dot notation for sparse columns.
  
- ```zon
+ ```zonf
  users:@(2):id
  1,meta.role:admin
  2,meta.role:user,meta.active:T
@@ -627,7 +627,7 @@ users:@(3):id,name
 
 For table values containing commas:
 
-```zon
+```zonf
 messages:@(1):id,text
 1,"He said ""hello"" to me"
 ```
@@ -638,7 +638,7 @@ messages:@(1):id,text
 
 ### 11.2 Escape Sequences
 
-```zon
+```zonf
 multiline:"Line 1\nLine 2"
 tab:"Col1\tCol2"
 quote:"She said \"Hi\""
@@ -656,7 +656,7 @@ backslash:"C:\\path\\file"
 
 Use literal UTF-8 (no `\uXXXX` escapes):
 
-```zon
+```zonf
 chinese:王小明
 emoji:✅
 arabic:مرحبا
@@ -887,7 +887,7 @@ Full Unicode support:
 {"users": [{"id": 1, "name": "Alice"}]}
 ```
 ↓ ZON (42% smaller)
-```zon
+```zonf
 users:@(1):id,name
 1,Alice
 ```
@@ -928,41 +928,49 @@ config.zonf
 
 ### 18.2 Media Type
 
-**Media type:** `text/zon`
-
 **Status:** Provisional (not yet registered with IANA)
+**Media type:** `text/zonf`
 
 **Charset:** UTF-8 (always)
 
 ZON documents are **always UTF-8 encoded**. The `charset=utf-8` parameter may be specified but defaults to UTF-8 when omitted.
 
-**HTTP Content-Type header:**
+### 20.1 HTTP Headers
+
 ```http
-Content-Type: text/zon
-Content-Type: text/zon; charset=utf-8  # Explicit (optional)
+Content-Type: text/zonf
+Content-Type: text/zonf; charset=utf-8  # Explicit (optional)
 ```
 
-### 18.3 MIME Type Usage
+### 20.2 Nginx Configuration
 
-**Web servers:**
 ```nginx
-# nginx
-location ~ \.zonf$ {
-    default_type text/zon;
-    charset utf-8;
+types {
+    text/zonf zonf;
+}
+
+server {
+    default_type text/zonf;
 }
 ```
 
+### 20.3 Apache Configuration
+
 ```apache
-# Apache
-AddType text/zon .zonf
-AddDefaultCharset utf-8
+AddType text/zonf .zonf
 ```
 
-**HTTP responses:**
+### 20.4 File Extension
+
+Files containing ZON data should use the `.zonf` extension.
+
+### 20.5 MIME Sniffing
+
+If the `Content-Type` header is missing, clients may sniff the content. ZON files typically start with a header row or a ZON node.
+
 ```http
 HTTP/1.1 200 OK
-Content-Type: text/zon; charset=utf-8
+Content-Type: text/zonf; charset=utf-8
 Content-Length: 1234
 
 users:@(2):id,name
@@ -1020,21 +1028,21 @@ Provisional (not yet IANA-registered). May pursue formal registration at v2.0.
 ### Appendix A: Examples
 
 **A.1 Simple Object**
-```zon
+```zonf
 active:T
 age:30
 name:Alice
 ```
 
 **A.2 Table**
-```zon
+```zonf
 users:@(2):active,id,name
 T,1,Alice
 F,2,Bob
 ```
 
 **A.3 Mixed**
-```zon
+```zonf
 tags:"[api,auth]"
 version:1.0
 users:@(1):id,name
@@ -1042,7 +1050,7 @@ users:@(1):id,name
 ```
 
 **A.4 Root Array**
-```zon
+```zonf
 @(2):id,name
 1,Alice
 2,Bob
@@ -1064,7 +1072,7 @@ users:@(1):id,name
 
 ### Appendix C: Changelog
 
-**v1.0.5 (2025-12-01)**
+**v1.1.0 (2025-12-01)**
  - Delta Encoding (`:delta`)
  - Hierarchical Sparse Encoding (deep flattening)
  - Metadata Optimization (grouped objects)

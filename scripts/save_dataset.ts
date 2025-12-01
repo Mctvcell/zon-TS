@@ -5,7 +5,7 @@ const { unifiedDataset } = require('../benchmarks/datasets');
 
 const BENCHMARKS_DIR = path.join(process.cwd(), 'benchmarks');
 const jsonPath = path.join(BENCHMARKS_DIR, 'unified_dataset.json');
-const zonPath = path.join(BENCHMARKS_DIR, 'unified_dataset.zon');
+const zonPath = path.join(BENCHMARKS_DIR, 'unified_dataset.zonf');
 
 const jsonContent = JSON.stringify(unifiedDataset, null, 2);
 const zonContent = encode(unifiedDataset);

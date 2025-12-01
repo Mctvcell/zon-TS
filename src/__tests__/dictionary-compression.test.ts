@@ -1,7 +1,7 @@
-import { ZonEncoder } from '../encoder';
-import { ZonDecoder } from '../decoder';
-import { encode } from '../encoder';
-import { decode } from '../decoder';
+import { ZonEncoder } from '../core/encoder';
+import { ZonDecoder } from '../core/decoder';
+import { encode } from '../core/encoder';
+import { decode } from '../core/decoder';
 
 describe('Dictionary Compression', () => {
   it('detects and compresses repeated strings', () => {

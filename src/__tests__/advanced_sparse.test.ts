@@ -1,6 +1,6 @@
-import { ZonEncoder } from '../encoder';
-import { ZonDecoder } from '../decoder';
-import { SparseMode } from '../types';
+import { ZonEncoder } from '../core/encoder';
+import { ZonDecoder } from '../core/decoder';
+import { SparseMode } from '../core/types';
 
 describe('Advanced Sparse Encoding', () => {
   let encoder: ZonEncoder;

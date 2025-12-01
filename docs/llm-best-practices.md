@@ -4,7 +4,7 @@ Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
  
- Guide for maximizing ZON's effectiveness in LLM applications. Updated for v1.0.5.
+ Guide for maximizing ZON's effectiveness in LLM applications. Updated for v1.1.0.
 
 ## Why ZON for LLMs?
 
@@ -179,7 +179,7 @@ Find all in-stock Electronics with rating above 4.0.
 
 ````
 ```zon
-metadata{deployed:2025-01-15,env:production,version:1.0.5}
+metadata{deployed:2025-01-15,env:production,version:1.1.0}
 users:@(5):id,name,active
 1,Alice,T
 2,Bob,F

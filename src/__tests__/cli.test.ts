@@ -26,8 +26,12 @@ describe('CLI Convert Command', () => {
     }
   });
 
-  const runCli = (args: string) => {
-    return execSync(`node ${CLI_PATH} ${args}`, { encoding: 'utf-8' });
+  const runCli = (args: string, suppressStderr = false) => {
+    const options: any = { encoding: 'utf-8' };
+    if (suppressStderr) {
+      options.stdio = ['inherit', 'pipe', 'ignore']; // Ignore stderr
+    }
+    return execSync(`node ${CLI_PATH} ${args}`, options);
   };
 
   it('converts JSON to ZON', () => {
@@ -104,12 +108,11 @@ items:
       fs.writeFileSync(inputFile, invalidContent);
 
       try {
-        runCli(`validate ${inputFile}`);
+        runCli(`validate ${inputFile}`, true); // Suppress stderr to avoid confusing test output
         fail('Should have thrown error');
       } catch (e: any) {
         expect(e.message).toContain('Command failed');
-        // stderr is not captured by default execSync unless we handle it, 
-        // but exit code 1 causes throw.
+        // Error message is suppressed but exit code 1 causes throw
       }
     });
   });

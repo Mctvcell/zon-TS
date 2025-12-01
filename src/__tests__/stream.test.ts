@@ -1,4 +1,4 @@
-import { ZonStreamEncoder, ZonStreamDecoder } from '../stream';
+import { ZonStreamEncoder, ZonStreamDecoder } from '../core/stream';
 
 describe('ZonStreamEncoder', () => {
   it('should encode a stream of objects', async () => {

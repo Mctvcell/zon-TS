@@ -2,13 +2,13 @@
 
 Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
 
-Quick reference for ZON format syntax. Cross-referenced with actual implementation in v1.0.5.
+Quick reference for ZON format syntax. Cross-referenced with actual implementation in v1.1.0.
 
 ## Basic Types
 
 ### Primitives
 
-```zon
+```zonf
 # String (unquoted when safe)
 name:Alice
 
@@ -26,10 +26,10 @@ value:null
 
 ### Objects
 
-```zon
+```zonf
 # Simple object
 name:ZON Format
-version:1.0.4
+version:1.1.0
 active:T
 score:98.5
 ```
@@ -38,7 +38,7 @@ score:98.5
 ```json
 {
   "name": "ZON Format",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "active": true,
   "score": 98.5
 }
@@ -46,14 +46,14 @@ score:98.5
 
 ### Nested Objects
 
-**Colon-less Syntax (v1.0.5):**
-```zon
+**Colon-less Syntax (v1.1.0):**
+```zonf
 # Colon is optional if value starts with { or [
 config{database{host:localhost,port:5432},cache{ttl:3600,enabled:T}}
 ```
 
 **Legacy Quoted (v1.x):**
-```zon
+```zonf
 config:"{database:{host:localhost,port:5432}}"
 ```
 
@@ -63,7 +63,7 @@ config:"{database:{host:localhost,port:5432}}"
 
 ### Primitive Arrays (Inline)
 
-```zon
+```zonf
 tags:"[nodejs,typescript,llm]"
 numbers:"[1,2,3,4,5]"
 flags:"[T,F,T]"
@@ -73,7 +73,7 @@ flags:"[T,F,T]"
 
 **Most efficient form - ZON's specialty**
 
-```zon
+```zonf
 users:@(3):active,id,name,role
 T,1,Alice,admin
 T,2,Bob,user
@@ -98,14 +98,14 @@ F,3,Carol,guest
 
 ### Mixed / Non-Uniform Arrays
 
-```zon
+```zonf
 # Quoted as JSON array
 items:"[{id:1,name:Alice},{id:2,name:Bob,role:admin}]"
 ```
 
 ### Empty Containers
 
-```zon
+```zonf
 # Empty object
 metadata:"{}"
 
@@ -139,7 +139,7 @@ tags:"[]"
 
 ### Safe Unquoted Strings
 
-```zon
+```zonf
 # Alphanumeric + dash, underscore, dot
 name:john-doe
 file:data_v1.json
@@ -152,7 +152,7 @@ host:api.example.com
 
 ### Basic Header (without count)
 
-```zon
+```zonf
 users:@:id,name,active
 1,Alice,T
 2,Bob,F
@@ -160,15 +160,15 @@ users:@:id,name,active
 
 ### Full Header (with count)
 
-```zon
+```zonf
 users:@(2):id,name,active
 1,Alice,T
 2,Bob,F
 ```
 
-### Delta Encoding (v1.0.5)
+### Delta Encoding (v1.1.0)
 
-```zon
+```zonf
 timeseries:@(3):ts:delta,val
 1000,10
 +60,12
@@ -176,6 +176,32 @@ timeseries:@(3):ts:delta,val
 ```
 
 **Best practice**: Always include count `@(N)` for explicit schema
+
+### Dictionary Compression (v1.1.0)
+
+For columns with repeated values:
+
+```zonf
+status[3]:delivered,in-transit,pending
+shipments:@(100):id,status
+1,2      # status index 2 = "pending"
+2,0      # status index 0 = "delivered"
+3,1      # status index 1 = "in-transit"
+```
+
+**Automatically applied when beneficial**
+
+### Metadata Optimization (v1.1.0)
+
+Grouped object syntax for nested metadata:
+
+```zonf
+context{location:Boulder,season:spring_2025,task:Our favorite hikes}
+hikes:@(3):companion,distance,id
+ana,7.5,1
+luis,9.2,2
+sam,5.1,3
+```
 
 ---
 
@@ -197,16 +223,16 @@ timeseries:@(3):ts:delta,val
 
 ### Config with nested data
 
-```zon
+```zonf
 environment:production
-version:"1.0.4"
+version:"1.1.0"
 database:"{host:db.example.com,port:5432,ssl:T}"
 features:"{darkMode:F,betaAccess:T}"
 ```
 
 ### Mixed structure (tables + metadata)
 
-```zon
+```zonf
 created:"2025-11-28"
 total:150
 users:@(3):id,name,status
@@ -217,7 +243,7 @@ users:@(3):id,name,status
 
 ### Root-level table
 
-```zon
+```zonf
 @(2):id,name,active
 1,Alice,T
 2,Bob,F
@@ -235,7 +261,7 @@ Within quoted strings:
 - `\t` - Tab
 
 **Example:**
-```zon
+```zonf
 message:"Line 1\nLine 2"
 path:"C:\\Users\\data"
 ```
@@ -247,7 +273,7 @@ path:"C:\\Users\\data"
 **JSON:**
 ```json
 {
-  "metadata": { "version": "1.0.4", "env": "production" },
+  "metadata": { "version": "1.1.0", "env": "production" },
   "users": [
     { "id": 1, "name": "Alice", "active": true, "loginCount": 42 },
     { "id": 2, "name": "Bob", "active": true, "loginCount": 17 },
@@ -258,8 +284,8 @@ path:"C:\\Users\\data"
 ```
 
 **ZON:**
-```zon
-metadata{env:production,version:1.0.5}
+```zonf
+metadata{env:production,version:1.1.0}
 users:@(3):active,id,loginCount,name
 T,1,42,Alice
 T,2,17,Bob

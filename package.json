@@ -1,6 +1,6 @@
 {
   "name": "zon-format",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "ZON: The most token-efficient serialization format for LLMs - beats CSV, TOON, JSON, and all competitors",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,13 +10,18 @@
   "browser": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
-    "./langchain": "./dist/langchain.js"
+    "./langchain": "./dist/langchain.js",
+    "./ai-sdk": "./dist/ai-sdk.js",
+    "./openai": "./dist/openai.js"
   },
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
-    "generate:examples": "npx ts-node scripts/generate_examples.ts",
+    "generate:examples": "node scripts/generate_examples.js",
+    "benchmark": "node benchmarks/scripts/run.js",
+    "benchmark:comprehensive": "node benchmarks/scripts/comprehensive-benchmark.js",
+    "benchmark:accuracy": "node benchmarks/scripts/retrieval-accuracy.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -53,6 +58,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/msgpack-lite": "^0.1.12",
     "@types/node": "^24.10.1",
+    "ai": "^5.0.104",
     "fast-xml-parser": "^5.3.2",
     "gpt-tokenizer": "^3.4.0",
     "jest": "^30.2.0",
