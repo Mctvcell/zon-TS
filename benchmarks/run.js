@@ -1,8 +1,3 @@
-/**
- * Benchmark: ZON vs TOON vs JSON
- * Compares token efficiency using GPT-5 o200k_base tokenizer
- */
-
 const { encode: encodeZON } = require('../dist/index');
 const { encode: encodeTOON } = require('@toon-format/toon');
 const { encode: encodeTokens } = require('gpt-tokenizer');
@@ -10,7 +5,6 @@ const { encode: encodeTokens } = require('gpt-tokenizer');
 const { unifiedDataset } = require('./datasets');
 const { largeComplexNonuniformNestedNonuniform } = require('./comprehensive-datasets');
 
-// Tokenizers
 const tokenizers = {
   'GPT-4o (o200k)': {
     count: (text) => encodeTokens(text).length,
@@ -26,10 +20,8 @@ const tokenizers = {
   }
 };
 
-// CSV Encoder
 const { encodeToCSV } = require('./csv-encoder');
 
-// XML Builder
 const { XMLBuilder } = require('fast-xml-parser');
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
@@ -37,27 +29,50 @@ const xmlBuilder = new XMLBuilder({
   indentBy: '  '
 });
 
-// YAML Dumper
 const yaml = require('js-yaml');
 
-// Helper to format numbers with commas
+/**
+ * Formats number with commas.
+ * 
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number
+ */
 function formatNumber(num) {
   return num.toLocaleString();
 }
 
-// Helper to calculate percentage difference
+/**
+ * Calculates percentage difference.
+ * 
+ * @param {number} baseline - Baseline value
+ * @param {number} comparison - Comparison value
+ * @returns {string} Formatted percentage
+ */
 function percentDiff(baseline, comparison) {
   const diff = ((comparison - baseline) / baseline) * 100;
   return diff > 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
 }
 
-// Helper to create visual bar
+/**
+ * Creates visual bar.
+ * 
+ * @param {number} percentage - Percentage to visualize
+ * @param {number} width - Bar width
+ * @returns {string} Visual bar
+ */
 function createBar(percentage, width = 20) {
   const filled = Math.round((percentage / 100) * width);
   return '█'.repeat(filled) + '░'.repeat(width - filled);
 }
 
-// Run benchmark for a single dataset
+/**
+ * Runs benchmark for a single dataset.
+ * 
+ * @param {string} name - Dataset name
+ * @param {Object} data - Dataset
+ * @param {string} description - Dataset description
+ * @returns {Object} Benchmark results
+ */
 function benchmarkDataset(name, data, description) {
   console.log(`\n${'═'.repeat(80)}`);
   console.log(`📊 ${name}`);

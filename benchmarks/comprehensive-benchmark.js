@@ -1,53 +1,53 @@
-/**
- * Comprehensive Benchmark Runner
- * Tests ZON against all data shape combinations
- */
-
 require('dotenv').config();
 const { encode: encodeZon } = require('../dist/index');
 const { encode: encodeTOON } = require('@toon-format/toon');
 const { encode: encodeTokens } = require('gpt-tokenizer');
 const comprehensiveDatasets = require('./comprehensive-datasets');
 
-// Import tokenizers
 const { encode: encodeGPT } = require('gpt-tokenizer');
 const anthropic = require('@anthropic-ai/tokenizer');
 const {LlamaTokenizer} = require('llama-tokenizer-js');
 
-// Helper to count Claude tokens
+/**
+ * Counts Claude tokens for text.
+ * 
+ * @param {string} text - Text to count
+ * @returns {number} Token count
+ */
 function countClaudeTokens(text) {
   return anthropic.countTokens(text);
 }
 
-// Helper to count Llama tokens
+/**
+ * Counts Llama tokens for text.
+ * 
+ * @param {string} text - Text to count
+ * @returns {number} Token count
+ */
 function countLlamaTokens(text) {
   const llamaTokenizer = new LlamaTokenizer();
   return llamaTokenizer.encode(text).length;
 }
 
-// Get dataset names
 const datasetNames = Object.keys(comprehensiveDatasets);
 
 console.log('╔════════════════════════════════════════════════════════════════════════════╗');
 console.log('║           COMPREHENSIVE ZON BENCHMARK - 18 Dataset Scenarios              ║');
 console.log('║              Testing Token Efficiency Across All Data Shapes              ║');
-console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
 
-// Results storage
 const results = {
   byDataset: {},
   summary: {}
 };
 
-// Process each dataset
 for (const datasetName of datasetNames) {
-  console.log(`\n${'='.repeat(80)}`);
+  console.log(`\\n${'='.repeat(80)}`);
   console.log(`📊 ${datasetName}`);
   console.log(`${'─'.repeat(80)}`);
   
   const data = comprehensiveDatasets[datasetName];
   
-  // Encode in both formats
   let zonEncoded, toonEncoded, jsonCompact;
   try {
     zonEncoded = encodeZon(data);
@@ -58,7 +58,6 @@ for (const datasetName of datasetNames) {
     continue;
   }
   
-  // Count tokens for each tokenizer
   const zonTokensGPT = encodeGPT(zonEncoded).length;
   const toonTokensGPT = encodeGPT(toonEncoded).length;
   const jsonTokensGPT = encodeGPT(jsonCompact).length;
@@ -71,7 +70,6 @@ for (const datasetName of datasetNames) {
   const toonTokensLlama = countLlamaTokens(toonEncoded);
   const jsonTokensLlama = countLlamaTokens(jsonCompact);
   
-  // Calculate savings
   const savingsVsTOON_GPT = ((toonTokensGPT - zonTokensGPT) / toonTokensGPT * 100).toFixed(1);
   const savingsVsJSON_GPT = ((jsonTokensGPT - zonTokensGPT) / jsonTokensGPT * 100).toFixed(1);
   
@@ -81,7 +79,6 @@ for (const datasetName of datasetNames) {
   const savingsVsTOON_Llama = ((toonTokensLlama - zonTokensLlama) / toonTokensLlama * 100).toFixed(1);
   const savingsVsJSON_Llama = ((jsonTokensLlama - zonTokensLlama) / jsonTokensLlama * 100).toFixed(1);
   
-  // Store results
   results.byDataset[datasetName] = {
     gpt4o: {
       zon: zonTokensGPT,
@@ -106,29 +103,26 @@ for (const datasetName of datasetNames) {
     }
   };
   
-  // Print results
-  console.log(`\n🔹 GPT-4o (o200k):`);
+  console.log(`\\n🔹 GPT-4o (o200k):`);
   console.log(`  ZON:  ${zonTokensGPT.toString().padStart(5)} tokens ${zonTokensGPT < toonTokensGPT ? '👑' : ''}`);
   console.log(`  TOON: ${toonTokensGPT.toString().padStart(5)} tokens (ZON ${savingsVsTOON_GPT > 0 ? '-' : '+'}${Math.abs(savingsVsTOON_GPT)}%)`);
   console.log(`  JSON: ${jsonTokensGPT.toString().padStart(5)} tokens (ZON ${savingsVsJSON_GPT > 0 ? '-' : '+'}${Math.abs(savingsVsJSON_GPT)}%)`);
   
-  console.log(`\n🔹 Claude 3.5 (Anthropic):`);
+  console.log(`\\n🔹 Claude 3.5 (Anthropic):`);
   console.log(`  ZON:  ${zonTokensClaude.toString().padStart(5)} tokens ${zonTokensClaude < toonTokensClaude ? '👑' : ''}`);
   console.log(`  TOON: ${toonTokensClaude.toString().padStart(5)} tokens (ZON ${savingsVsTOON_Claude > 0 ? '-' : '+'}${Math.abs(savingsVsTOON_Claude)}%)`);
   console.log(`  JSON: ${jsonTokensClaude.toString().padStart(5)} tokens (ZON ${savingsVsJSON_Claude > 0 ? '-' : '+'}${Math.abs(savingsVsJSON_Claude)}%)`);
   
-  console.log(`\n🔹 Llama 3 (Meta):`);
+  console.log(`\\n🔹 Llama 3 (Meta):`);
   console.log(`  ZON:  ${zonTokensLlama.toString().padStart(5)} tokens ${zonTokensLlama < toonTokensLlama ? '👑' : ''}`);
   console.log(`  TOON: ${toonTokensLlama.toString().padStart(5)} tokens (ZON ${savingsVsTOON_Llama > 0 ? '-' : '+'}${Math.abs(savingsVsTOON_Llama)}%)`);
   console.log(`  JSON: ${jsonTokensLlama.toString().padStart(5)} tokens (ZON ${savingsVsJSON_Llama > 0 ? '-' : '+'}${Math.abs(savingsVsJSON_Llama)}%)`);
 }
 
-// Calculate summary statistics
-console.log('\n\n╔════════════════════════════════════════════════════════════════════════════╗');
+console.log('\\n\\n╔════════════════════════════════════════════════════════════════════════════╗');
 console.log('║                          SUMMARY STATISTICS                                ║');
-console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
 
-// Group by category (small-simple, medium-complex, large-complex)
 const categories = {
   'Small-Simple': datasetNames.filter(n => n.startsWith('smallSimple')),
   'Medium-Complex': datasetNames.filter(n => n.startsWith('mediumComplex')),
@@ -136,9 +130,8 @@ const categories = {
 };
 
 for (const [categoryName, datasets] of Object.entries(categories)) {
-  console.log(`\n📈 ${categoryName}:`);
+  console.log(`\\n📈 ${categoryName}:`);
   
-  // Calculate averages for each tokenizer
   const avgGPT = {
     zonWins: datasets.filter(d => results.byDataset[d].gpt4o.zon < results.byDataset[d].gpt4o.toon).length,
     avgSavingsVsTOON: datasets.reduce((sum, d) => sum + results.byDataset[d].gpt4o.savingsVsTOON, 0) / datasets.length,
@@ -162,8 +155,7 @@ for (const [categoryName, datasets] of Object.entries(categories)) {
   console.log(`  Llama 3:  ZON wins ${avgLlama.zonWins}/${datasets.length} | Avg savings: ${avgLlama.avgSavingsVsTOON.toFixed(1)}% vs TOON, ${avgLlama.avgSavingsVsJSON.toFixed(1)}% vs JSON`);
 }
 
-// Overall summary
-console.log(`\n\n📊 OVERALL PERFORMANCE:`);
+console.log(`\\n\\n📊 OVERALL PERFORMANCE:`);
 
 const allDatasets = datasetNames;
 const overallGPT = {
@@ -187,17 +179,16 @@ const overallLlama = {
 console.log(`  GPT-4o:   ZON wins ${overallGPT.zonWins}/${allDatasets.length} datasets (${(overallGPT.zonWins / allDatasets.length * 100).toFixed(0)}%)`);
 console.log(`            Average savings: ${overallGPT.avgSavingsVsTOON.toFixed(1)}% vs TOON, ${overallGPT.avgSavingsVsJSON.toFixed(1)}% vs JSON`);
 
-console.log(`\n  Claude:   ZON wins ${overallClaude.zonWins}/${allDatasets.length} datasets (${(overallClaude.zonWins / allDatasets.length * 100).toFixed(0)}%)`);
+console.log(`\\n  Claude:   ZON wins ${overallClaude.zonWins}/${allDatasets.length} datasets (${(overallClaude.zonWins / allDatasets.length * 100).toFixed(0)}%)`);
 console.log(`            Average savings: ${overallClaude.avgSavingsVsTOON.toFixed(1)}% vs TOON, ${overallClaude.avgSavingsVsJSON.toFixed(1)}% vs JSON`);
 
-console.log(`\n  Llama 3:  ZON wins ${overallLlama.zonWins}/${allDatasets.length} datasets (${(overallLlama.zonWins / allDatasets.length * 100).toFixed(0)}%)`);
+console.log(`\\n  Llama 3:  ZON wins ${overallLlama.zonWins}/${allDatasets.length} datasets (${(overallLlama.zonWins / allDatasets.length * 100).toFixed(0)}%)`);
 console.log(`            Average savings: ${overallLlama.avgSavingsVsTOON.toFixed(1)}% vs TOON, ${overallLlama.avgSavingsVsJSON.toFixed(1)}% vs JSON`);
 
-console.log('\n' + '='.repeat(80));
-console.log('✨ Comprehensive benchmark complete!\n');
+console.log('\\n' + '='.repeat(80));
+console.log('✨ Comprehensive benchmark complete!\\n');
 
-// Save results
 const fs = require('fs');
 const resultsPath = require('path').join(__dirname, 'comprehensive-results.json');
 fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
-console.log(`💾 Detailed results saved to: ${resultsPath}\n`);
+console.log(`💾 Detailed results saved to: ${resultsPath}\\n`);

@@ -1,32 +1,20 @@
-/**
- * Azure AI Foundry LLM Client
- * 
- * Unified client for querying multiple models through Azure AI:
- * - GPT-5 (OpenAI)
- * - Claude Sonnet 4.5 (Anthropic)  
- * - Grok-4 (xAI)
- */
-
 require('dotenv').config();
 const { AzureOpenAI } = require('openai');
 const fs = require('fs');
 const path = require('path');
 
-// Cache configuration
 const CACHE_DIR = process.env.CACHE_DIR || path.join(__dirname, '.cache');
 const USE_CACHE = true;
 
-// Ensure cache directory exists
 if (USE_CACHE && !fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, {recursive: true});
 }
 
 /**
- * Azure AI Client
+ * Azure AI client for querying multiple LLM models.
  */
 class AzureAIClient {
   constructor() {
-    // Validate environment variables
     if (!process.env.AZURE_OPENAI_API_KEY) {
       throw new Error('AZURE_OPENAI_API_KEY not set in .env file');
     }
@@ -34,14 +22,12 @@ class AzureAIClient {
       throw new Error('AZURE_OPENAI_ENDPOINT not set in .env file');
     }
     
-    // Initialize Azure OpenAI client using openai SDK
     this.client = new AzureOpenAI({
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       endpoint: process.env.AZURE_OPENAI_ENDPOINT,
       apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-01'
     });
     
-    // Model deployments (user's Azure AI Studio deployments)
     this.models = {
       'gpt-5-nano': process.env.AZURE_GPT5_DEPLOYMENT || 'gpt-5-nano',
       'grok-3': process.env.AZURE_GROK3_DEPLOYMENT || 'grok-3',
@@ -55,7 +41,11 @@ class AzureAIClient {
   }
   
   /**
-   * Generate cache key for a query
+   * Generates cache key for a query.
+   * 
+   * @param {string} model - Model name
+   * @param {string} prompt - Prompt text
+   * @returns {string} Cache file path
    */
   _getCacheKey(model, prompt) {
     const crypto = require('crypto');
@@ -66,7 +56,11 @@ class AzureAIClient {
   }
   
   /**
-   * Get cached response if available
+   * Retrieves cached response if available.
+   * 
+   * @param {string} model - Model name
+   * @param {string} prompt - Prompt text
+   * @returns {Object|null} Cached response or null
    */
   _getCache(model, prompt) {
     if (!USE_CACHE) return null;
@@ -84,7 +78,11 @@ class AzureAIClient {
   }
   
   /**
-   * Save response to cache
+   * Saves response to cache.
+   * 
+   * @param {string} model - Model name
+   * @param {string} prompt - Prompt text
+   * @param {Object} response - Response to cache
    */
   _setCache(model, prompt, response) {
     if (!USE_CACHE) return;
@@ -98,15 +96,14 @@ class AzureAIClient {
   }
   
   /**
-   * Query a model with a prompt
+   * Queries a model with a prompt.
    * 
-   * @param {string} modelName - Model to query (gpt-5, claude-sonnet-4-5, grok-4)
-   * @param {string} prompt - The prompt to send
+   * @param {string} modelName - Model to query
+   * @param {string} prompt - Prompt to send
    * @param {number} maxTokens - Maximum tokens in response
-   * @returns {Promise<{answer: string, tokensUsed: number}>}
+   * @returns {Promise<{answer: string, tokensUsed: number, cached: boolean}>}
    */
   async query(modelName, prompt, maxTokens = 2000) {
-    // Check cache first
     const cached = this._getCache(modelName, prompt);
     if (cached) {
       return {
@@ -126,7 +123,6 @@ class AzureAIClient {
     
     while (retries <= MAX_RETRIES) {
       try {
-        // Use openai SDK's standard API (works with Azure)
         const response = await this.client.chat.completions.create({
           model: deployment,
           messages: [
@@ -147,7 +143,6 @@ class AzureAIClient {
         
         const result = {answer, tokensUsed};
         
-        // Cache the result only if valid
         if (answer && answer.length > 0) {
           this._setCache(modelName, prompt, result);
         }
@@ -157,8 +152,8 @@ class AzureAIClient {
       } catch (error) {
         if (error.status === 429 && retries < MAX_RETRIES) {
           retries++;
-          let delay = Math.pow(2, retries) * 1000 + (Math.random() * 1000); // Exponential backoff + jitter
-          if (delay > 60000) delay = 60000; // Cap at 60 seconds
+          let delay = Math.pow(2, retries) * 1000 + (Math.random() * 1000);
+          if (delay > 60000) delay = 60000;
           
           console.log(`      ⚠️  Rate limit hit for ${modelName}. Retrying in ${Math.round(delay)}ms (Attempt ${retries}/${MAX_RETRIES})...`);
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -172,7 +167,11 @@ class AzureAIClient {
   }
   
   /**
-   * Query multiple models in parallel
+   * Queries multiple models in parallel.
+   * 
+   * @param {string} prompt - Prompt to send
+   * @param {number} maxTokens - Maximum tokens in response
+   * @returns {Promise<Object>} Results from all models
    */
   async queryAll(prompt, maxTokens = 100) {
     const results = {};
@@ -193,16 +192,19 @@ class AzureAIClient {
   }
   
   /**
-   * Estimate cost for a query
-   * Based on Azure AI prices (approximate)
+   * Estimates cost for a query based on token usage.
+   * 
+   * @param {string} modelName - Model name
+   * @param {number} promptTokens - Input tokens
+   * @param {number} completionTokens - Output tokens
+   * @returns {number} Estimated cost in dollars
    */
   estimateCost(modelName, promptTokens, completionTokens) {
-    // Prices per 1M tokens (input/output) - estimates from Azure AI pricing
     const pricing = {
       'gpt-5-nano': {input: 0.15, output: 0.30},
-      'grok-3': {input: 2.00, output: 4.00},            // Estimated
+      'grok-3': {input: 2.00, output: 4.00},
       'deepseek-v3.1': {input: 0.50, output: 1.00},
-      'Llama-3.3-70B-Instruct': {input: 0.70, output: 0.90} // Llama 3.3 pricing
+      'Llama-3.3-70B-Instruct': {input: 0.70, output: 0.90}
     };
     
     const modelPrices = pricing[modelName] || pricing['gpt-5-nano'];
@@ -215,9 +217,8 @@ class AzureAIClient {
 
 module.exports = {AzureAIClient};
 
-// Test if run directly
 if (require.main === module) {
-  console.log('🔬 Azure AI Client Test\n');
+  console.log('🔬 Azure AI Client Test\\n');
   console.log('═'.repeat(60));
   
   async function test() {
@@ -227,18 +228,18 @@ if (require.main === module) {
       const testPrompt = `Data format: JSON
 Data:
 [
-  {"id": 1, "name": "Alice", "salary": 95000},
-  {"id": 2, "name": "Bob", "salary": 82000}
+  {\"id\": 1, \"name\": \"Alice\", \"salary\": 95000},
+  {\"id\": 2, \"name\": \"Bob\", \"salary\": 82000}
 ]
 
 Question: What is Alice's salary?
 
 Answer:`;
       
-      console.log('\n📝 Test Prompt:');
-      console.log(testPrompt.substring(0, 200) + '...\n');
+      console.log('\\n📝 Test Prompt:');
+      console.log(testPrompt.substring(0, 200) + '...\\n');
       
-      console.log('Querying models...\n');
+      console.log('Querying models...\\n');
       
       const results = await client.queryAll(testPrompt);
       
@@ -248,17 +249,17 @@ Answer:`;
         } else {
           const cacheStatus = result.cached ? '💾 (cached)' : '🌐 (live)';
           console.log(`✅ ${model} ${cacheStatus}:`);
-          console.log(`   Answer: "${result.answer}"`);
+          console.log(`   Answer: \"${result.answer}\"`);
           console.log(`   Tokens: ${result.tokensUsed}`);
         }
       }
       
-      console.log('\n' + '═'.repeat(60));
+      console.log('\\n' + '═'.repeat(60));
       console.log('✨ Test complete!');
       
     } catch (error) {
-      console.error('\n❌ Test failed:', error.message);
-      console.error('\nMake sure you have:');
+      console.error('\\n❌ Test failed:', error.message);
+      console.error('\\nMake sure you have:');
       console.error('1. Created .env file (copy from .env.example)');
       console.error('2. Set AZURE_OPENAI_API_KEY');
       console.error('3. Set AZURE_OPENAI_ENDPOINT');

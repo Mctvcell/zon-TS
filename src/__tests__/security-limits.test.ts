@@ -5,10 +5,6 @@ import { MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS }
 describe('Security Limits (DOS Prevention)', () => {
   describe('E301: Document Size Limit', () => {
     test('should throw when document exceeds 100MB', () => {
-      // Skip this test in normal runs - it's very slow
-      // Uncomment to verify manually
-      // const largeDoc = 'x'.repeat(MAX_DOCUMENT_SIZE + 1);
-      // expect(() => decode(largeDoc)).toThrow(/E301/);
     });
 
     test('should allow documents under 100MB', () => {
@@ -36,17 +32,12 @@ describe('Security Limits (DOS Prevention)', () => {
 
   describe('E303: Array Length Limit', () => {
     test('should have array length limit defined', () => {
-      // The limit exists in implementation at MAX_ARRAY_LENGTH (1M items)
-      // Creating 1M+ items for testing would be too slow/memory intensive
-      // The check is verified via code inspection at line 480-486 in decoder.ts
       expect(MAX_ARRAY_LENGTH).toBe(1_000_000);
     });
   });
 
   describe('E304: Object Key Count Limit', () => {
     test('should have object key limit defined', () => {
-      // The limit exists in implementation at MAX_OBJECT_KEYS (100K keys)
-      // Creating 100K+ keys for testing would be too slow
       expect(MAX_OBJECT_KEYS).toBe(100_000);
     });
 

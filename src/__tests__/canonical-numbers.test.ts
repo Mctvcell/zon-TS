@@ -55,9 +55,7 @@ describe('Canonical Number Formatting', () => {
       const data = { value: 3.141592653589793 };
       const encoded = encode(data);
       
-      // Should preserve precision but trim trailing zeros
-      expect(encoded).toContain('3.14159265358979'); // JavaScript precision
-      // Should not contain scientific notation (e+, e-)
+      expect(encoded).toContain('3.14159265358979');
       expect(encoded).not.toMatch(/\de[+-]?\d/);
     });
   });
@@ -133,12 +131,10 @@ describe('Canonical Number Formatting', () => {
       
       const encoded = encode(data);
       
-      // Should not contain scientific notation
       expect(encoded).not.toContain('e+');
       expect(encoded).not.toContain('e-');
       expect(encoded).not.toContain('E');
       
-      // Should contain actual values
       expect(encoded).toContain('1000000');
       expect(encoded).toContain('0.001');
       expect(encoded).toContain('42');

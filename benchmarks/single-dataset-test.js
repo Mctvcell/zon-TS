@@ -1,8 +1,3 @@
-/**
- * Single Dataset LLM Retrieval Accuracy Test
- * Tests the unified dataset with gpt-5-nano across ZON, TOON, and JSON formats
- */
-
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -13,22 +8,23 @@ const { generateUnifiedQuestions } = require('./questions');
 const { AzureAIClient } = require('./llm-client');
 const { validateAnswer, extractAnswer } = require('./validators');
 
-// Configuration
 const OUTPUT_FILE = path.join(__dirname, 'single-dataset-results.json');
 const CACHE_DIR = path.join(__dirname, '.cache');
 const CONCURRENCY = 3;
 
-// Clear cache to ensure fresh results
 console.log('🧹 Clearing cache...');
 if (fs.existsSync(CACHE_DIR)) {
   fs.rmSync(CACHE_DIR, { recursive: true, force: true });
 }
-// Recreate cache directory
 fs.mkdirSync(CACHE_DIR, { recursive: true });
-console.log('✅ Cache cleared\n');
+console.log('✅ Cache cleared\\n');
 
 /**
- * Encode data into specified format
+ * Encodes data into specified format.
+ * 
+ * @param {Object} data - Data to encode
+ * @param {string} format - Format name
+ * @returns {string|null} Encoded data or null
  */
 function encodeData(data, format) {
   try {
@@ -49,7 +45,12 @@ function encodeData(data, format) {
 }
 
 /**
- * Build prompt for LLM
+ * Builds prompt for LLM.
+ * 
+ * @param {string} data - Encoded data
+ * @param {string} format - Format name
+ * @param {string} question - Question text
+ * @returns {string} Formatted prompt
  */
 function buildPrompt(data, format, question) {
   const header = `Data format: ${format}`;
@@ -66,26 +67,24 @@ Answer:`;
 }
 
 /**
- * Run the single dataset test
+ * Runs single dataset test.
+ * 
+ * @returns {Promise<Object>} Test results
  */
 async function runSingleDatasetTest() {
   console.log('╔════════════════════════════════════════════════════════════════════════════╗');
   console.log('║           SINGLE DATASET LLM RETRIEVAL ACCURACY TEST                       ║');
   console.log('║                  Unified Dataset × 3 Formats × 24 Questions                ║');
-  console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+  console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
   
-  // Initialize client
   const client = new AzureAIClient();
   const model = 'gpt-5-nano';
   
-  // Get data and questions
   const data = unifiedDataset;
   const questions = generateUnifiedQuestions().unifiedDataset;
   
-  // Formats to test
   const formats = ['ZON', 'TOON', 'JSON'];
   
-  // Results storage
   const results = {
     timestamp: new Date().toISOString(),
     model: model,
@@ -95,9 +94,8 @@ async function runSingleDatasetTest() {
   };
   
   console.log(`Dataset: Unified Dataset (5 users, config, logs, metadata)`);
-  console.log(`Questions: ${questions.length} total\n`);
+  console.log(`Questions: ${questions.length} total\\n`);
   
-  // Pre-encode data in all formats
   const encodedData = {};
   formats.forEach(format => {
     encodedData[format] = encodeData(data, format);
@@ -107,10 +105,9 @@ async function runSingleDatasetTest() {
   });
   console.log('');
   
-  // Process each format
   for (const format of formats) {
     if (!encodedData[format]) {
-      console.log(`⚠️  ${format}: Skipped (encoding failed)\n`);
+      console.log(`⚠️  ${format}: Skipped (encoding failed)\\n`);
       continue;
     }
     
@@ -121,7 +118,6 @@ async function runSingleDatasetTest() {
     let totalTokens = 0;
     const failures = [];
     
-    // Process questions in batches
     for (let i = 0; i < questions.length; i += CONCURRENCY) {
       const batch = questions.slice(i, i + CONCURRENCY);
       const promises = batch.map(async (q) => {
@@ -175,7 +171,6 @@ async function runSingleDatasetTest() {
     const accuracy = ((correctCount / questions.length) * 100).toFixed(1);
     console.log(` ${correctCount}/${questions.length} (${accuracy}%)`);
     
-    // Store results
     results.formats[format] = {
       correct: correctCount,
       total: questions.length,
@@ -184,7 +179,6 @@ async function runSingleDatasetTest() {
       failures: failures
     };
     
-    // Show failures
     if (failures.length > 0) {
       console.log(`  Failures (${failures.length}):`);
       failures.slice(0, 5).forEach(f => {
@@ -203,13 +197,11 @@ async function runSingleDatasetTest() {
     console.log('');
   }
   
-  // Save results
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
   
-  // Print Summary
   console.log('╔════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                              RESULTS SUMMARY                               ║');
-  console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+  console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
   
   console.log('Accuracy by Format:');
   formats.forEach(format => {
@@ -220,14 +212,13 @@ async function runSingleDatasetTest() {
     }
   });
   
-  console.log(`\n💾 Detailed results: ${OUTPUT_FILE}`);
-  console.log('\n' + '='.repeat(80));
-  console.log('✨ Test complete!\n');
+  console.log(`\\n💾 Detailed results: ${OUTPUT_FILE}`);
+  console.log('\\n' + '='.repeat(80));
+  console.log('✨ Test complete!\\n');
   
   return results;
 }
 
-// Run if called directly
 if (require.main === module) {
   runSingleDatasetTest().catch(console.error);
 }

@@ -1,13 +1,3 @@
-/**
- * ZON Encoder v2.0.0 - Compact Hybrid Format
- *
- * Breaking changes from v1.x:
- * - Compact header syntax (@count: instead of @data(count):)
- * - Sequential ID omission ([col] notation)
- * - Sparse table encoding for semi-uniform data
- * - Adaptive format selection based on data complexity
- */
-
 import {
   TABLE_MARKER,
   META_SEPARATOR,
@@ -34,6 +24,9 @@ interface ColumnAnalysis {
   has_repetition: boolean;
 }
 
+/**
+ * Encodes data structures into ZON format v1.0.5.
+ */
 export class ZonEncoder {
   private anchor_interval: number;
   private safe_str_re: RegExp;
@@ -44,16 +37,16 @@ export class ZonEncoder {
   }
 
   /**
-   * Encode data to ZON v1.0.2 ClearText format.
+   * Encodes data to ZON format.
+   * 
+   * @param data - Data to encode
+   * @returns ZON formatted string
    */
   encode(data: any): string {
-    // 1. Root Promotion: Separate metadata from stream
     const [streamData, metadata, streamKey] = this._extractPrimaryStream(data);
 
-    // Fallback for simple/empty data
     if (!streamData && (!metadata || Object.keys(metadata).length === 0)) {
       if (typeof data === 'object' && data !== null) {
-        // Special case: Empty object -> empty string
         if (!Array.isArray(data) && Object.keys(data).length === 0) {
             return "";
         }
@@ -64,35 +57,25 @@ export class ZonEncoder {
 
     const output: string[] = [];
 
-    // Special case: Detect schema uniformity for lists of dicts
     if (Array.isArray(data) && data.length > 0 && data.every(item => typeof item === 'object' && !Array.isArray(item))) {
-      // Calculate irregularity score
       const irregularityScore = this._calculateIrregularity(data);
       
-      // If highly irregular (>60% keys differ), use list format
       if (irregularityScore > 0.6) {
         return this._formatZonNode(data);
       }
-      
-      // Otherwise use table format (even if semi-uniform)
-      // The sparse table encoding will handle optional fields efficiently
     }
 
-    // 1. Root Promotion: Extract primary stream into table
-    // If stream_key is None (pure list input), use default key
     let finalStreamKey = streamKey;
     if (streamData && streamKey === null) {
       finalStreamKey = "data";
     }
 
-    // 3. Write Metadata (YAML-like)
     if (metadata && Object.keys(metadata).length > 0) {
       output.push(...this._writeMetadata(metadata));
     }
 
-    // 4. Write Table (if multi-item stream exists)
     if (streamData && finalStreamKey) {
-      if (output.length > 0) {  // Add blank line separator
+      if (output.length > 0) {
         output.push("");
       }
       output.push(...this._writeTable(streamData, finalStreamKey));
@@ -102,33 +85,30 @@ export class ZonEncoder {
   }
 
   /**
-   * Root Promotion Algorithm: Find the main table in the JSON.
+   * Extracts the primary data stream from input.
+   * 
+   * @param data - Input data
+   * @returns Tuple of [stream, metadata, key]
    */
   private _extractPrimaryStream(data: any): [any[] | null, Record<string, any>, string | null] {
     if (Array.isArray(data)) {
-      // Only promote to table if it contains objects
       if (data.length > 0 && typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
         return [data, {}, null];
       }
       
-      // v2.0.2 Optimization: Root-level array of primitives -> [val,val]
-      // Uses optimized _formatZonNode (no quotes)
       if (data.length > 0 && data.every(item => typeof item !== 'object' || item === null)) {
-        return [null, {}, null]; // Fallback to JSON.stringify -> _formatZonNode logic
+        return [null, {}, null];
       }
 
-      return [null, {}, null];  // Treat as simple value
+      return [null, {}, null];
     }
 
     if (typeof data === 'object' && data !== null) {
-      // Find largest list of objects
       const candidates: [string, any[], number][] = [];
       
       for (const [k, v] of Object.entries(data)) {
         if (Array.isArray(v) && v.length > 0) {
-          // Check if list contains objects (tabular candidate)
           if (typeof v[0] === 'object' && !Array.isArray(v[0])) {
-            // Score = Rows * Cols
             const score = v.length * Object.keys(v[0]).length;
             candidates.push([k, v, score]);
           }
@@ -139,7 +119,7 @@ export class ZonEncoder {
         candidates.sort((a, b) => {
           const scoreDiff = b[2] - a[2];
           if (scoreDiff !== 0) return scoreDiff;
-          return a[0].localeCompare(b[0]); // Tie-breaker: alphabetical key
+          return a[0].localeCompare(b[0]);
         });
         const [key, stream] = candidates[0];
         const meta: Record<string, any> = {};
@@ -158,13 +138,13 @@ export class ZonEncoder {
   }
 
   /**
-   * Write metadata in YAML-like format.
+   * Writes metadata section in YAML-like format.
+   * 
+   * @param metadata - Metadata object
+   * @returns Array of formatted lines
    */
   private _writeMetadata(metadata: Record<string, any>): string[] {
     const lines: string[] = [];
-    // v2.0.3 Optimization: Flatten top-level objects (depth 1)
-    // This converts config:{db:{...}} into config.db:{...}
-    // Reduces "Mega Object" nesting at the root
     const flattened = this._flatten(metadata, '', '.', 1);
 
     const sortedKeys = Object.keys(flattened).sort();
@@ -172,7 +152,6 @@ export class ZonEncoder {
       const val = flattened[key];
       const valStr = this._formatValue(val);
       
-      // v2.0.5 Optimization: Colon-less syntax for root metadata
       if (valStr.startsWith('{') || valStr.startsWith('[')) {
         lines.push(`${key}${valStr}`);
       } else {
@@ -184,7 +163,11 @@ export class ZonEncoder {
   }
 
   /**
-   * Write table in v2.0.0 compact format with adaptive encoding.
+   * Writes table data with adaptive encoding strategy.
+   * 
+   * @param stream - Array of data objects
+   * @param key - Table key name
+   * @returns Array of formatted lines
    */
   private _writeTable(stream: any[], key: string): string[] {
     if (!stream || stream.length === 0) {
@@ -194,17 +177,14 @@ export class ZonEncoder {
     const lines: string[] = [];
     const flatStream = stream.map(row => this._flatten(row));
 
-    // Get all column names
     const allKeysSet = new Set<string>();
     flatStream.forEach(d => Object.keys(d).forEach(k => allKeysSet.add(k)));
     let cols = Array.from(allKeysSet).sort();
 
-    // Analyze column sparsity
     const columnStats = this._analyzeColumnSparsity(flatStream, cols);
     const coreColumns = columnStats.filter(c => c.presence >= 0.7).map(c => c.name);
     const optionalColumns = columnStats.filter(c => c.presence < 0.7).map(c => c.name);
 
-    // Decide encoding strategy
     const useSparseEncoding = optionalColumns.length > 0 && optionalColumns.length <= 5;
 
     if (useSparseEncoding) {
@@ -215,18 +195,19 @@ export class ZonEncoder {
   }
 
   /**
-   * Write standard compact table (v2.0.0 format).
-   */
-  /**
-   * Write standard compact table (v2.0.0 format).
+   * Writes standard table format.
+   * 
+   * @param flatStream - Flattened data rows
+   * @param cols - Column names
+   * @param rowCount - Number of rows
+   * @param key - Table key
+   * @returns Array of formatted lines
    */
   private _writeStandardTable(flatStream: Record<string, any>[], cols: string[], rowCount: number, key: string): string[] {
     const lines: string[] = [];
 
-    // Detect sequential columns to omit
     const omittedCols = this._analyzeSequentialColumns(flatStream, cols);
 
-    // Build compact header: key:@(count)[omitted]: columns or @count[omitted]: columns
     let header = '';
     if (key && key !== 'data') {
       header = `${key}${META_SEPARATOR}${TABLE_MARKER}(${rowCount})`;
@@ -238,17 +219,14 @@ export class ZonEncoder {
       header += omittedCols.map(c => `[${c}]`).join('');
     }
 
-    // Filter out omitted columns
     const visibleCols = cols.filter(c => !omittedCols.includes(c));
     header += `${META_SEPARATOR}${visibleCols.join(',')}`;
     lines.push(header);
 
-    // Write rows (without omitted columns)
     for (const row of flatStream) {
       const tokens: string[] = [];
       for (const col of visibleCols) {
         const val = row[col];
-        // Use "null" for undefined/null to preserve type
         if (val === undefined || val === null) {
           tokens.push('null');
         } else {
@@ -262,7 +240,14 @@ export class ZonEncoder {
   }
 
   /**
-   * Write sparse table for semi-uniform data (v2.0.0).
+   * Writes sparse table format for semi-uniform data.
+   * 
+   * @param flatStream - Flattened data rows
+   * @param coreColumns - Core column names
+   * @param optionalColumns - Optional column names
+   * @param rowCount - Number of rows
+   * @param key - Table key
+   * @returns Array of formatted lines
    */
   private _writeSparseTable(
     flatStream: Record<string, any>[],
@@ -273,10 +258,8 @@ export class ZonEncoder {
   ): string[] {
     const lines: string[] = [];
 
-    // Detect sequential columns in core columns
     const omittedCols = this._analyzeSequentialColumns(flatStream, coreColumns);
 
-    // Build header: key:@(count)[omitted]: core_columns
     let header = '';
     if (key && key !== 'data') {
       header = `${key}${META_SEPARATOR}${TABLE_MARKER}(${rowCount})`;
@@ -292,16 +275,13 @@ export class ZonEncoder {
     header += `${META_SEPARATOR}${visibleCoreColumns.join(',')}`;
     lines.push(header);
 
-    // Write rows: core columns + optional fields as key:value
     for (const row of flatStream) {
       const tokens: string[] = [];
 
-      // Core columns (fixed positions)
       for (const col of visibleCoreColumns) {
         tokens.push(this._formatValue(row[col]));
       }
 
-      // Optional columns (append as key:value if present)
       for (const col of optionalColumns) {
         if (col in row && row[col] !== undefined) {
           const val = this._formatValue(row[col]);
@@ -316,7 +296,11 @@ export class ZonEncoder {
   }
 
   /**
-   * Analyze column sparsity to determine core vs optional.
+   * Analyzes column presence across rows.
+   * 
+   * @param data - Array of data rows
+   * @param cols - Column names
+   * @returns Array of column statistics
    */
   private _analyzeColumnSparsity(data: Record<string, any>[], cols: string[]): Array<{name: string, presence: number}> {
     return cols.map(col => {
@@ -329,42 +313,23 @@ export class ZonEncoder {
   }
 
   /**
-   * Detect sequential columns (1, 2, 3, ..., N) for omission.
-   */
-  /**
-   * Detect sequential columns (1, 2, 3, ..., N) for omission.
+   * Detects sequential columns for potential omission.
+   * Disabled in v1.0.5 for improved LLM accuracy.
    * 
-   * NOTE: Disabled in v1.0.5 to improve LLM retrieval accuracy.
-   * Implicit columns like [id] were being missed by LLMs.
-   * Now all columns are explicit.
+   * @param data - Array of data rows
+   * @param cols - Column names
+   * @returns Array of omittable column names
    */
   private _analyzeSequentialColumns(data: Record<string, any>[], cols: string[]): string[] {
-    return []; // Disable omission for now
-    /*
-    const omittable: string[] = [];
-    
-    for (const col of cols) {
-      const values = data.map(d => d[col]);
-
-      // Must be all integers
-      if (!values.every(v => typeof v === 'number' && Number.isInteger(v))) {
-        continue;
-      }
-
-      // Check if perfectly sequential from 1..N
-      const isSequential = values.every((v, i) => v === i + 1);
-
-      if (isSequential && values.length > 2) {
-        omittable.push(col);
-      }
-    }
-
-    return omittable;
-    */
+    return [];
   }
 
   /**
-   * Analyze columns for compression opportunities.
+   * Analyzes columns for compression opportunities.
+   * 
+   * @param data - Array of data rows
+   * @param cols - Column names
+   * @returns Column analysis results
    */
   private _analyzeColumns(data: Record<string, any>[], cols: string[]): Record<string, ColumnAnalysis> {
     const analysis: Record<string, ColumnAnalysis> = {};
@@ -378,7 +343,6 @@ export class ZonEncoder {
         has_repetition: false
       };
 
-      // Check for sequential numbers
       const nums = vals.filter(v => typeof v === 'number' && typeof v !== 'boolean');
       if (nums.length === vals.length && vals.length > 1) {
         try {
@@ -389,11 +353,9 @@ export class ZonEncoder {
             result.step = Array.from(uniqueDiffs)[0];
           }
         } catch (e) {
-          // ignore
         }
       }
 
-      // Check for repetition
       if (vals.length > 1) {
         try {
           const unique = new Set(vals.map(v => JSON.stringify(v)));
@@ -401,7 +363,6 @@ export class ZonEncoder {
             result.has_repetition = true;
           }
         } catch (e) {
-          // ignore
         }
       }
 
@@ -412,15 +373,16 @@ export class ZonEncoder {
   }
 
   /**
-   * Calculate irregularity score for array of objects.
-   * Returns 0.0 (perfectly uniform) to 1.0 (completely different schemas).
+   * Calculates schema irregularity score for array of objects.
+   * 
+   * @param data - Array of objects
+   * @returns Irregularity score from 0.0 (uniform) to 1.0 (irregular)
    */
   private _calculateIrregularity(data: Record<string, any>[]): number {
     if (data.length === 0) {
       return 0;
     }
 
-    // Get all unique keys across all objects
     const allKeys = new Set<string>();
     const keySets: Set<string>[] = [];
     
@@ -435,8 +397,6 @@ export class ZonEncoder {
       return 0;
     }
 
-    // Calculate key overlap score
-    // For each pair of objects, measure how many keys they share
     let totalOverlap = 0;
     let comparisons = 0;
 
@@ -445,13 +405,11 @@ export class ZonEncoder {
         const keys1 = keySets[i];
         const keys2 = keySets[j];
         
-        // Count shared keys
         let shared = 0;
         keys1.forEach(k => {
           if (keys2.has(k)) shared++;
         });
         
-        // Jaccard similarity: shared / (size1 + size2 - shared)
         const union = keys1.size + keys2.size - shared;
         const similarity = union > 0 ? shared / union : 1;
         
@@ -461,18 +419,20 @@ export class ZonEncoder {
     }
 
     if (comparisons === 0) {
-      return 0;  // Single object
+      return 0;
     }
 
     const avgSimilarity = totalOverlap / comparisons;
-    const irregularity = 1 - avgSimilarity;  // 0 = all same, 1 = all different
+    const irregularity = 1 - avgSimilarity;
 
     return irregularity;
   }
 
   /**
-   * Quote a string for CSV (RFC 4180).
-   * Escapes quotes by doubling them (" -> "") and wraps in double quotes.
+   * Quotes string for CSV format (RFC 4180).
+   * 
+   * @param s - String to quote
+   * @returns Quoted string
    */
   private _csvQuote(s: string): string {
     const escaped = s.replace(/"/g, '""');
@@ -480,9 +440,11 @@ export class ZonEncoder {
   }
 
   /**
-   * Format nested structure using YAML-like ZON syntax:
-   * - Dict: {key:val,key:val}
-   * - List: [val,val]
+   * Formats nested structures using ZON syntax.
+   * 
+   * @param val - Value to format
+   * @param visited - Set of visited objects for circular reference detection
+   * @returns Formatted string
    */
   private _formatZonNode(val: any, visited: WeakSet<object> = new WeakSet()): string {
     if (typeof val === 'object' && val !== null) {
@@ -499,18 +461,13 @@ export class ZonEncoder {
       }
       const items: string[] = [];
       for (const k of keys) {
-        // Format key (unquoted if simple)
         let kStr = String(k);
-        // Keys are usually simple, but quote if needed
         if (/[,:\{\}\[\]"]/.test(kStr)) {
           kStr = JSON.stringify(kStr);
         }
 
-        // Format value recursively
         const vStr = this._formatZonNode(val[k], visited);
         
-        // v2.0.5 Optimization: Colon-less Objects/Arrays (key{...} or key[...])
-        // If value starts with { or [, omit the colon
         if (vStr.startsWith('{') || vStr.startsWith('[')) {
           items.push(`${kStr}${vStr}`);
         } else {
@@ -525,7 +482,6 @@ export class ZonEncoder {
       return "[" + val.map(item => this._formatZonNode(item, visited)).join(",") + "]";
     }
 
-    // Primitives
     if (val === null) {
       return "null";
     }
@@ -536,10 +492,8 @@ export class ZonEncoder {
       return "F";
     }
     if (typeof val === 'number') {
-      // Preserve exact numeric representation
       if (!Number.isInteger(val)) {
         let s = String(val);
-        // Ensure floats always have decimal point
         if (!/[\.e]/i.test(s)) {
           s += '.0';
         }
@@ -549,31 +503,24 @@ export class ZonEncoder {
       }
     }
 
-    // String handling - only quote if necessary
   const s = String(val);
 
-  // CRITICAL FIX: Always JSON-stringify strings with newlines to prevent line breaks in ZON
   if (s.includes('\n') || s.includes('\r')) {
     return JSON.stringify(s);
   }
 
-  // OPTIMIZATION 1: ISO Date Detection (Same as _formatValue)
   if (this._isISODate(s)) {
     return s;
   }
 
-  // OPTIMIZATION 2: Smarter Number Detection (Same as _formatValue)
   if (this._needsTypeProtection(s)) {
     return JSON.stringify(s);
   }
 
-  // Quote empty strings or whitespace-only strings
   if (!s.trim()) {
     return JSON.stringify(s);
   }
 
-  // Quote if contains structural delimiters
-  // v2.0.1 Optimization: Allow colons in values (e.g. URLs, timestamps)
   if (/[,\{\}\[\]"]/.test(s)) {
     return JSON.stringify(s);
   }
@@ -582,8 +529,10 @@ export class ZonEncoder {
 }
 
   /**
-   * Format a value with minimal quoting.
-   * v1.0.4 Optimization: Smart date detection and relaxed string quoting
+   * Formats a value with minimal quoting.
+   * 
+   * @param val - Value to format
+   * @returns Formatted string
    */
   private _formatValue(val: any): string {
     if (val === null) {
@@ -599,36 +548,28 @@ export class ZonEncoder {
       return val ? "T" : "F";
     }
     if (typeof val === 'number') {
-      // Handle special values
       if (!Number.isFinite(val)) {
-        return "null";  // NaN, Infinity, -Infinity → null
+        return "null";
       }
       
-      // Canonical number formatting - avoid scientific notation
       if (Number.isInteger(val)) {
         return String(val);
       }
       
-      // For floats, format without trailing zeros
       let s = String(val);
       
-      // Check if it's in scientific notation
       if (s.includes('e') || s.includes('E')) {
-        // Convert to fixed-point notation
         const parts = s.split(/[eE]/);
         const mantissa = parseFloat(parts[0]);
         const exponent = parseInt(parts[1], 10);
         
         if (exponent >= 0) {
-          // Positive exponent - multiply
           s = (mantissa * Math.pow(10, exponent)).toString();
         } else {
-          // Negative exponent - use toFixed
           s = mantissa.toFixed(Math.abs(exponent));
         }
       }
       
-      // Ensure decimal point for floats
       if (!s.includes('.')) {
         s += '.0';
       }
@@ -637,37 +578,25 @@ export class ZonEncoder {
     }
 
     if (Array.isArray(val) || (typeof val === 'object' && val !== null)) {
-    // Use ZON-style formatting for complex types
-    // ZON structures are self-delimiting ({}, []) and should NOT be quoted
-    // unless they are meant to be strings (which is handled by string path)
     return this._formatZonNode(val);
   }
 
-    // String formatting with v1.0.4 optimizations
     const s = String(val);
 
-    // CRITICAL FIX: Always JSON-stringify strings with newlines to prevent line breaks in ZON
     if (s.includes('\n') || s.includes('\r')) {
       return this._csvQuote(JSON.stringify(s));
     }
 
-    // OPTIMIZATION 1: ISO Date Detection
-    // Dates like "2025-01-01" or "2025-01-01T10:00:00Z" are unambiguous
-    // No need to quote - LLMs recognize ISO 8601 format universally
     if (this._isISODate(s)) {
       return s;
     }
 
-    // OPTIMIZATION 2: Smarter Number Detection
-    // Only quote actual numbers, not complex patterns like IPs or alphanumeric IDs
     const needsTypeProtection = this._needsTypeProtection(s);
 
     if (needsTypeProtection) {
-      // Wrap in quotes (JSON style) then CSV quote
       return this._csvQuote(JSON.stringify(s));
     }
 
-    // Check if it needs CSV quoting (delimiters)
     if (this._needsQuotes(s)) {
       return this._csvQuote(s);
     }
@@ -676,19 +605,18 @@ export class ZonEncoder {
   }
 
   /**
-   * Check if string is an ISO 8601 date/datetime.
-   * Examples: "2025-01-01", "2025-01-01T10:00:00Z", "2025-01-01T10:00:00+05:30"
+   * Checks if string is an ISO 8601 date/datetime.
+   * 
+   * @param s - String to check
+   * @returns True if ISO date format
    */
   private _isISODate(s: string): boolean {
-    // ISO 8601 full datetime with timezone
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(s)) {
       return true;
     }
-    // ISO 8601 date only
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       return true;
     }
-    // Simple time
     if (/^\d{2}:\d{2}:\d{2}$/.test(s)) {
       return true;
     }
@@ -696,82 +624,67 @@ export class ZonEncoder {
   }
 
   /**
-   * Determine if string needs type protection (quoting to preserve as string).
-   * v1.0.4: More precise - only protect actual numbers, not complex patterns.
+   * Determines if string needs type protection quoting.
+   * 
+   * @param s - String to check
+   * @returns True if quoting needed
    */
   private _needsTypeProtection(s: string): boolean {
     const sLower = s.toLowerCase();
     
-    // Reserved words
     if (['t', 'f', 'true', 'false', 'null', 'none', 'nil'].includes(sLower)) {
       return true;
     }
     
-    // Gas/Liquid tokens
     if ([GAS_TOKEN, LIQUID_TOKEN].includes(s)) {
       return true;
     }
     
-    // Leading/trailing whitespace must be preserved
     if (s.trim() !== s) {
       return true;
     }
     
-    // Control characters need JSON escaping (prevent binary file)
-    // Matches ASCII 0-31 (including null, backspace, etc.)
     if (/[\x00-\x1f]/.test(s)) {
       return true;
     }
 
-    // Pure integer: "123" or "-456"
     if (/^-?\d+$/.test(s)) {
       return true;
     }
 
-    // Pure decimal: "3.14" or "-2.5"
     if (/^-?\d+\.\d+$/.test(s)) {
       return true;
     }
 
-    // Scientific notation: "1e5", "2.5e-3"
     if (/^-?\d+(\.\d+)?e[+-]?\d+$/i.test(s)) {
       return true;
     }
-
-    // OPTIMIZATION 2: Complex patterns DON'T need quoting
-    // Examples that should NOT be quoted:
-    // - "192.168.1.1" (IP address - dots distinguish from number)
-    // - "u123" (alphanumeric ID - letter prefix)
-    // - "v1.0.4" (version string)
-    // - "2025-01-01" (date - handled by _isISODate above)
     
-    // If it starts/ends with digit but has non-numeric chars, check carefully
     if (/^\d/.test(s) || /\d$/.test(s)) {
-      // Try parsing - if it parses cleanly and matches, it's a number
       const num = parseFloat(s);
       if (!isNaN(num) && String(num) === s) {
-        return true;  // It's actually a pure number like "3.14159"
+        return true;
       }
-      // Otherwise it's a complex pattern like "192.168.1.1" - NO PROTECTION
     }
 
     return false;
   }
 
   /**
-   * Determine if a string needs quotes.
+   * Determines if string needs CSV quoting.
+   * 
+   * @param s - String to check
+   * @returns True if quoting needed
    */
   private _needsQuotes(s: string): boolean {
     if (!s) {
       return true;
     }
 
-    // Reserved tokens need quoting
     if (['T', 'F', 'null', GAS_TOKEN, LIQUID_TOKEN].includes(s)) {
       return true;
     }
 
-    // Quote if it looks like a number (to preserve string type)
     if (/^-?\d+$/.test(s)) {
       return true;
     }
@@ -781,17 +694,12 @@ export class ZonEncoder {
         return true;
       }
     } catch (e) {
-      // ignore
     }
 
-    // Quote if leading/trailing whitespace (preserved)
     if (s.trim() !== s) {
       return true;
     }
 
-    // Only quote if contains delimiter or control chars
-    // v2.0.1 Optimization: Allow colons in values (e.g. URLs, timestamps)
-    // The decoder splits on the FIRST colon, so subsequent colons in value are safe.
     if (/[,\n\r\t"\[\]|;]/.test(s)) {
       return true;
     }
@@ -800,7 +708,15 @@ export class ZonEncoder {
   }
 
   /**
-   * Flatten nested dictionary with depth limit.
+   * Flattens nested dictionary with depth limit.
+   * 
+   * @param d - Dictionary to flatten
+   * @param parent - Parent key prefix
+   * @param sep - Key separator
+   * @param maxDepth - Maximum flattening depth
+   * @param currentDepth - Current depth level
+   * @param visited - Set of visited objects
+   * @returns Flattened dictionary
    */
   private _flatten(
     d: any,
@@ -825,13 +741,10 @@ export class ZonEncoder {
     for (const [k, v] of Object.entries(d)) {
       const newKey = parent ? `${parent}${sep}${k}` : k;
 
-      // DEPTH LIMIT: Stop flattening beyond max_depth
       if (typeof v === 'object' && v !== null && !Array.isArray(v) && currentDepth < maxDepth) {
-        // Recursively flatten this level
         const flattened = this._flatten(v, newKey, sep, maxDepth, currentDepth + 1, visited);
         items.push(...Object.entries(flattened));
       } else {
-        // Keep as-is: primitives or objects beyond depth limit
         items.push([newKey, v]);
       }
     }
@@ -841,7 +754,11 @@ export class ZonEncoder {
 }
 
 /**
- * Convenience function to encode data to ZON v1.0.2 format.
+ * Encodes data to ZON format v1.0.5.
+ * 
+ * @param data - Data to encode
+ * @param anchorInterval - Anchor interval for encoding
+ * @returns ZON formatted string
  */
 export function encode(data: any, anchorInterval: number = DEFAULT_ANCHOR_INTERVAL): string {
   return new ZonEncoder(anchorInterval).encode(data);

@@ -1,33 +1,29 @@
-/**
- * Roundtrip Verification for Comprehensive Datasets
- * Ensures all 18 datasets maintain perfect data integrity through ZON encode/decode
- */
-
 const { encode, decode } = require('../dist/index');
 const comprehensiveDatasets = require('./comprehensive-datasets');
 
 console.log('╔════════════════════════════════════════════════════════════════════════════╗');
 console.log('║        COMPREHENSIVE DATASETS ROUNDTRIP VERIFICATION                       ║');
-console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
 
 const datasetNames = Object.keys(comprehensiveDatasets);
 let passed = 0;
 let failed = 0;
 const failures = [];
 
+/**
+ * Normalizes JSON for comparison.
+ * 
+ * @param {Object} obj - Object to normalize
+ * @returns {string} Normalized JSON string
+ */
+const normalizeJSON = (obj) => JSON.stringify(obj, Object.keys(obj).sort());
+
 for (const datasetName of datasetNames) {
   const original = comprehensiveDatasets[datasetName];
   
   try {
-    // Encode
     const encoded = encode(original);
-    
-    // Decode
     const decoded = decode(encoded);
-    
-    // Normalize both to ensure consistent key ordering for comparison
-    // JSON.stringify with sorted keys ensures fair comparison
-    const normalizeJSON = (obj) => JSON.stringify(obj, Object.keys(obj).sort());
     
     const isEqual = normalizeJSON(original) === normalizeJSON(decoded);
     
@@ -55,11 +51,11 @@ for (const datasetName of datasetNames) {
   }
 }
 
-console.log(`\n${'='.repeat(80)}`);
+console.log(`\\n${'='.repeat(80)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);
 
 if (failed > 0) {
-  console.log('\n⚠️  FAILURES DETECTED:\n');
+  console.log('\\n⚠️  FAILURES DETECTED:\\n');
   failures.forEach((failure, index) => {
     console.log(`${index + 1}. ${failure.dataset}`);
     if (failure.error) {
@@ -71,7 +67,6 @@ if (failed > 0) {
       console.log(`   Original keys: ${origKeys.join(', ')}`);
       console.log(`   Decoded keys:  ${decodedKeys.join(', ')}`);
       
-      // Check for missing or extra keys
       const missingKeys = origKeys.filter(k => !decodedKeys.includes(k));
       const extraKeys = decodedKeys.filter(k => !origKeys.includes(k));
       
@@ -82,7 +77,6 @@ if (failed > 0) {
         console.log(`   Extra keys: ${extraKeys.join(', ')}`);
       }
       
-      // Show encoded output sample
       console.log(`   Encoded (first 200 chars):`);
       console.log(`   ${failure.encoded.substring(0, 200)}...`);
     }
@@ -91,6 +85,6 @@ if (failed > 0) {
   
   process.exit(1);
 } else {
-  console.log('\n✨ All datasets pass roundtrip verification!\n');
+  console.log('\\n✨ All datasets pass roundtrip verification!\\n');
   process.exit(0);
 }

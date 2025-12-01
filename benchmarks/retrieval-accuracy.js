@@ -1,10 +1,3 @@
-/**
- * LLM Retrieval Accuracy Benchmark Runner
- * 
- * Tests how well different LLMs understand ZON vs other formats
- * by asking 200+ questions across 8 datasets.
- */
-
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -21,21 +14,22 @@ const { AzureAIClient } = require('./llm-client');
 const { validateAnswer, extractAnswer } = require('./validators');
 const { UnifiedSchema } = require('./schema-def');
 
-// TSON (using CSON as proxy)
 const tson = require('cson');
 
-// Configuration
 const OUTPUT_FILE = path.join(__dirname, 'accuracy-results.json');
-const CONCURRENCY = 1; // Parallel requests per model
+const CONCURRENCY = 1;
 
-// Initialize XML builder
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
   format: true
 });
 
 /**
- * Encode data into specified format
+ * Encodes data into specified format.
+ * 
+ * @param {Object} data - Data to encode
+ * @param {string} format - Format name
+ * @returns {string|null} Encoded data or null if failed
  */
 function encodeData(data, format) {
   try {
@@ -57,18 +51,22 @@ function encodeData(data, format) {
       case 'YAML':
         return yaml.dump(data);
       case 'XML':
-        // XML requires a root element
         return xmlBuilder.build({ root: data });
       default:
         throw new Error(`Unknown format: ${format}`);
     }
   } catch (e) {
-    return null; // Format failed for this data (e.g. CSV on nested)
+    return null;
   }
 }
 
 /**
- * Build prompt for LLM
+ * Builds prompt for LLM.
+ * 
+ * @param {string} data - Encoded data
+ * @param {string} format - Format name
+ * @param {string} question - Question text
+ * @returns {string} Formatted prompt
  */
 function buildPrompt(data, format, question) {
   let header = `Data format: ${format}`;

@@ -1,8 +1,5 @@
 import { decode } from '../index';
 
-/**
- * Conformance tests based on FORMAL_SPEC.md §11.2 Decoder Checklist
- */
 describe('Decoder Conformance (§11.2)', () => {
   test('should accept UTF-8 with LF or CRLF', () => {
     const zonLF = 'key:value\nkey2:value2';
@@ -86,8 +83,6 @@ users:@(2):id,name
   });
 
   test('should throw on document size > 100MB (E301)', () => {
-    // Skip this in normal runs - memory intensive
-    // Verified via implementation inspection
   });
 
   test('should throw on line length > 1MB (E302)', () => {
@@ -122,7 +117,6 @@ data:@(2):id,name
 `;
     const result = decode(zonData);
     
-    // Should return array directly, not { data: [...] }
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(2);
   });

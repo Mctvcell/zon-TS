@@ -1,8 +1,3 @@
-/**
- * Pilot LLM Retrieval Accuracy Benchmark
- * Tests 3 representative datasets with gpt-5-nano
- */
-
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -13,22 +8,23 @@ const { generatePilotQuestions } = require('./pilot-questions');
 const { AzureAIClient } = require('./llm-client');
 const { validateAnswer, extractAnswer } = require('./validators');
 
-// Configuration
 const OUTPUT_FILE = path.join(__dirname, 'pilot-accuracy-results.json');
 const CACHE_DIR = path.join(__dirname, '.cache');
-const CONCURRENCY = 3; // Reduced to avoid rate limits
+const CONCURRENCY = 3;
 
-// Clear cache to ensure fresh results
 console.log('🧹 Clearing cache...');
 if (fs.existsSync(CACHE_DIR)) {
   fs.rmSync(CACHE_DIR, { recursive: true, force: true });
 }
-// Recreate cache directory
 fs.mkdirSync(CACHE_DIR, { recursive: true });
-console.log('✅ Cache cleared\n');
+console.log('✅ Cache cleared\\n');
 
 /**
- * Encode data into specified format
+ * Encodes data into specified format.
+ * 
+ * @param {Object} data - Data to encode
+ * @param {string} format - Format name
+ * @returns {string|null} Encoded data or null
  */
 function encodeData(data, format) {
   try {
@@ -49,7 +45,12 @@ function encodeData(data, format) {
 }
 
 /**
- * Build prompt for LLM
+ * Builds prompt for LLM.
+ * 
+ * @param {string} data - Encoded data
+ * @param {string} format - Format name
+ * @param {string} question - Question text
+ * @returns {string} Formatted prompt
  */
 function buildPrompt(data, format, question) {
   const header = `Data format: ${format}`;
@@ -66,19 +67,19 @@ Answer:`;
 }
 
 /**
- * Run the pilot benchmark
+ * Runs pilot benchmark.
+ * 
+ * @returns {Promise<Object>} Benchmark results
  */
 async function runPilotBenchmark() {
   console.log('╔════════════════════════════════════════════════════════════════════════════╗');
   console.log('║              PILOT LLM RETRIEVAL ACCURACY BENCHMARK                        ║');
   console.log('║                  3 Datasets × 3 Formats × 10 Questions                     ║');
-  console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+  console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
   
-  // Initialize client
   const client = new AzureAIClient();
   const model = 'gpt-5-nano';
   
-  // Get pilot datasets and questions
   const datasetNames = [
     'smallSimpleUniformFlat',
     'mediumComplexNonUniformFlat',
@@ -86,10 +87,8 @@ async function runPilotBenchmark() {
   ];
   const allQuestions = generatePilotQuestions();
   
-  // Formats to test
   const formats = ['ZON', 'TOON', 'JSON'];
   
-  // Results storage
   const results = {
     timestamp: new Date().toISOString(),
     model: model,
@@ -97,9 +96,8 @@ async function runPilotBenchmark() {
     summary: {}
   };
   
-  // Process each dataset
   for (const datasetName of datasetNames) {
-    console.log(`\n${'='.repeat(80)}`);
+    console.log(`\\n${'='.repeat(80)}`);
     console.log(`📊 ${datasetName}`);
     console.log(`${'─'.repeat(80)}`);
     
@@ -108,13 +106,11 @@ async function runPilotBenchmark() {
     
     results.datasets[datasetName] = {};
     
-    // Pre-encode data in all formats
     const encodedData = {};
     formats.forEach(format => {
       encodedData[format] = encodeData(data, format);
     });
     
-    // Process each format
     for (const format of formats) {
       if (!encodedData[format]) {
         console.log(`   ⚠️  ${format}: Skipped (encoding failed)`);
@@ -127,7 +123,6 @@ async function runPilotBenchmark() {
       let totalTokens = 0;
       const failures = [];
       
-      // Process questions in batches
       for (let i = 0; i < questions.length; i += CONCURRENCY) {
         const batch = questions.slice(i, i + CONCURRENCY);
         const promises = batch.map(async (q) => {
@@ -179,7 +174,6 @@ async function runPilotBenchmark() {
       const accuracy = ((correctCount / questions.length) * 100).toFixed(1);
       console.log(` ${correctCount}/${questions.length} (${accuracy}%)`);
       
-      // Store results
       results.datasets[datasetName][format] = {
         correct: correctCount,
         total: questions.length,
@@ -188,7 +182,6 @@ async function runPilotBenchmark() {
         failures: failures
       };
       
-      // Show failures if any
       if (failures.length > 0 && failures.length <= 3) {
         failures.forEach(f => {
           if (f.error) {
@@ -203,17 +196,15 @@ async function runPilotBenchmark() {
     }
   }
   
-  // Save results
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
-  console.log(`\n💾 Results saved to ${OUTPUT_FILE}`);
+  console.log(`\\n💾 Results saved to ${OUTPUT_FILE}`);
   
-  // Print Summary
-  console.log('\n╔════════════════════════════════════════════════════════════════════════════╗');
+  console.log('\\n╔════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                          PILOT RESULTS SUMMARY                             ║');
-  console.log('╚════════════════════════════════════════════════════════════════════════════╝\n');
+  console.log('╚════════════════════════════════════════════════════════════════════════════╝\\n');
   
   for (const datasetName of datasetNames) {
-    console.log(`\n📊 ${datasetName}:`);
+    console.log(`\\n📊 ${datasetName}:`);
     const datasetResults = results.datasets[datasetName];
     
     for (const format of formats) {
@@ -223,8 +214,7 @@ async function runPilotBenchmark() {
     }
   }
   
-  // Overall summary
-  console.log('\n\n📈 OVERALL PERFORMANCE:');
+  console.log('\\n\\n📈 OVERALL PERFORMANCE:');
   const overallStats = {};
   formats.forEach(format => {
     let totalCorrect = 0;
@@ -252,13 +242,12 @@ async function runPilotBenchmark() {
     console.log(`  ${format.padEnd(6)}: ${stats.accuracy.padStart(5)}% accuracy (${stats.correct}/${stats.total}) | ${stats.tokens.toLocaleString()} tokens total`);
   }
   
-  console.log('\n' + '='.repeat(80));
-  console.log('✨ Pilot benchmark complete!\n');
+  console.log('\\n' + '='.repeat(80));
+  console.log('✨ Pilot benchmark complete!\\n');
   
   return results;
 }
 
-// Run if called directly
 if (require.main === module) {
   runPilotBenchmark().catch(console.error);
 }

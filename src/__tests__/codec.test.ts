@@ -1,8 +1,3 @@
-/**
- * ZON Codec Tests
- * Port of test_codec.py from the Python implementation
- */
-
 import { encode, decode } from '../index';
 
 describe('ZON Codec', () => {
@@ -163,10 +158,8 @@ describe('ZON Codec', () => {
       const decoded = decode(encoded);
       expect(decoded).toEqual(data);
     });
-  });
 
-  describe('Hikes example from README', () => {
-    test('Full hikes example', () => {
+    test('Hikes example from README', () => {
       const data = {
         context: {
           task: 'Our favorite hikes together',
@@ -206,12 +199,8 @@ describe('ZON Codec', () => {
       const decoded = decode(encoded);
       expect(decoded).toEqual(data);
 
-      // Verify the encoded format structure
-      // v2.0.5: Context is flattened (dot notation)
       expect(encoded).toContain('context.task:');
-      // v2.0.5: Friends array is colon-less
       expect(encoded).toContain('friends[');
-      // Hikes table still uses colon because it starts with @
       expect(encoded).toContain('hikes:@(3):companion,distanceKm,elevationGain,id,name,wasSunny');
     });
   });
@@ -308,10 +297,8 @@ describe('ZON Codec', () => {
       const encoded = encode(data);
       const decoded = decode(encoded);
       expect(decoded).toEqual(data);
-      // Should be encoded as JSON array, not table
       expect(encoded.startsWith('[')).toBe(true);
     });
-
 
     test('Deeply nested objects', () => {
       const data = {
@@ -358,7 +345,6 @@ describe('ZON Codec', () => {
       ];
       const encoded = encode(data);
       
-      // Check that booleans are encoded as T/F (with or without comma)
       expect(encoded).toMatch(/[,\n]T/);
       expect(encoded).toMatch(/[,\n]F/);
       

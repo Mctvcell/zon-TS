@@ -23,7 +23,6 @@ users:@(3):id,name
 `;
       
       const result = decode(zonData, { strict: false });
-      // Non-strict mode allows fewer rows
       expect(result.users).toHaveLength(2);
     });
 
@@ -62,7 +61,6 @@ users:@(2):id,name,role
       
       const result = decode(zonData, { strict: false });
       expect(result.users).toHaveLength(2);
-      // Missing fields are parsed as empty string, then become null or empty
       expect(result.users[0].id).toBe(1);
       expect(result.users[0].name).toBe('Alice');
       expect(result.users[1]).toEqual({ id: 2, name: 'Bob', role: 'admin' });
@@ -128,7 +126,6 @@ users:@(2):id,name
 1,Alice
 `;
       
-      // Should throw because default is strict: true
       expect(() => decode(zonData)).toThrow(ZonDecodeError);
     });
 

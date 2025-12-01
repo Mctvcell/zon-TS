@@ -1,8 +1,3 @@
-/**
- * Unified Question Generator
- * Generates questions for the Unified Dataset.
- */
-
 const { unifiedDataset } = require('./datasets');
 
 const QUESTION_TYPES = {
@@ -13,10 +8,14 @@ const QUESTION_TYPES = {
   STRUCTURAL_VALIDATION: 'validation'
 };
 
+/**
+ * Generates benchmark questions for unified dataset.
+ * 
+ * @returns {Object} Object containing questions array
+ */
 function generateUnifiedQuestions() {
   const questions = [];
 
-  // --- Field Retrieval ---
   questions.push(
     { q: "What is the system version?", a: "2.5.0", type: QUESTION_TYPES.FIELD_RETRIEVAL },
     { q: "What is the database host?", a: "db-primary.internal", type: QUESTION_TYPES.FIELD_RETRIEVAL },
@@ -28,7 +27,6 @@ function generateUnifiedQuestions() {
     { q: "Which source generated the high memory warning?", a: "monitor", type: QUESTION_TYPES.FIELD_RETRIEVAL }
   );
 
-  // --- Aggregation ---
   questions.push(
     { q: "How many users are there?", a: "5", type: QUESTION_TYPES.AGGREGATION },
     { q: "How many active users?", a: "4", type: QUESTION_TYPES.AGGREGATION },
@@ -38,7 +36,6 @@ function generateUnifiedQuestions() {
     { q: "What is the average priority of database replicas?", a: "7.5", type: QUESTION_TYPES.AGGREGATION }
   );
 
-  // --- Filtering ---
   questions.push(
     { q: "How many users have role 'dev' or 'ops'?", a: "2", type: QUESTION_TYPES.FILTERING },
     { q: "How many logs occurred after 10:05:00?", a: "2", type: QUESTION_TYPES.FILTERING },
@@ -47,32 +44,22 @@ function generateUnifiedQuestions() {
     { q: "How many features are explicitly enabled?", a: "2", type: QUESTION_TYPES.FILTERING }
   );
 
-  // --- Structure Awareness ---
   questions.push(
     { q: "What are the top-level keys in the dataset?", a: "metadata,users,config,logs", type: QUESTION_TYPES.STRUCTURE_AWARENESS },
     { q: "What fields are available for a user?", a: "id,name,role,active,loginCount,lastLogin", type: QUESTION_TYPES.STRUCTURE_AWARENESS },
     { q: "Does the config section contain database settings?", a: "true", type: QUESTION_TYPES.STRUCTURE_AWARENESS }
   );
 
-  // --- Validation ---
   questions.push(
     { q: "Are all user IDs unique?", a: "true", type: QUESTION_TYPES.STRUCTURAL_VALIDATION },
     { q: "Do all logs have a timestamp?", a: "true", type: QUESTION_TYPES.STRUCTURAL_VALIDATION },
-
-    // --- Complex Filtering (New) ---
     { q: "How many users are active AND have role 'admin'?", a: "1", type: QUESTION_TYPES.FILTERING },
     { q: "Which user has the highest ID?", a: "Eve External", type: QUESTION_TYPES.FILTERING },
     { q: "How many logs are NOT 'INFO' level?", a: "2", type: QUESTION_TYPES.FILTERING },
-
-    // --- Deep Nested Retrieval (New) ---
     { q: "What is the port of the database?", a: "5432", type: QUESTION_TYPES.FIELD_RETRIEVAL },
     { q: "Is the 'darkMode' feature enabled?", a: "true", type: QUESTION_TYPES.FIELD_RETRIEVAL },
-
-    // --- Aggregation (New) ---
     { q: "What is the sum of all user IDs?", a: "15", type: QUESTION_TYPES.AGGREGATION },
     { q: "How many top-level keys are in the config object?", a: "3", type: QUESTION_TYPES.AGGREGATION },
-
-    // --- Complex Reasoning (New) ---
     { q: "Is the user with the highest login count active?", a: "true", type: QUESTION_TYPES.FILTERING },
     { q: "What is the role of the user who logged in most recently?", a: "guest", type: QUESTION_TYPES.FILTERING },
     { q: "How many users have a role starting with 'a'?", a: "1", type: QUESTION_TYPES.FILTERING },

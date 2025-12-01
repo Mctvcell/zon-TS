@@ -1,21 +1,13 @@
-/**
- * ZON Decoder v2.0.0 - Compact Hybrid Format
- *
- * Supports both v1.x and v2.0.0 formats:
- * - v2.0: Compact headers (@count:), sequential ID reconstruction, sparse tables
- * - v1.x: Legacy format (@tablename(count):) for backward compatibility
- */
-
 import { TABLE_MARKER, META_SEPARATOR, MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS, MAX_NESTING_DEPTH } from './constants';
 import { ZonDecodeError } from './exceptions';
 
 export interface DecodeOptions {
-  strict?: boolean;  // Default: true
+  strict?: boolean;
 }
 
 interface TableInfo {
   cols: string[];
-  omittedCols?: string[];  // v2.0: Sequential columns to reconstruct
+  omittedCols?: string[];
   rows: Record<string, any>[];
   prev_vals: Record<string, any>;
   row_index: number;
@@ -32,7 +24,10 @@ export class ZonDecoder {
   }
 
   /**
-   * Decode ZON v1.0.2 ClearText format to original data structure.
+   * Decodes ZON format string to original data structure.
+   * 
+   * @param zonStr - ZON formatted string
+   * @returns Decoded data
    */
   decode(zonStr: string): any {
     if (!zonStr) {
@@ -201,9 +196,10 @@ export class ZonDecoder {
   }
 
   /**
-   * Parse table header line (supports v1.x and v2.0.0 formats).
-   * v2.0: @count[omitted]: cols or @count: cols
-   * v1.x: @tablename(count): cols
+   * Parses table header line.
+   * 
+   * @param line - Header line to parse
+   * @returns Tuple of [tableName, tableInfo]
    */
   private _parseTableHeader(line: string): [string, TableInfo] {
     // Try v2.0 format with name: @name(count)[col][col]:columns
@@ -321,7 +317,11 @@ export class ZonDecoder {
   }
 
   /**
-   * Parse a table row with v2.0 sparse encoding support.
+   * Parses a table row with sparse encoding support.
+   * 
+   * @param line - Row line to parse
+   * @param table - Table information
+   * @returns Parsed row object
    */
   private _parseTableRow(line: string, table: TableInfo): Record<string, any> {
     const tokens = this._splitByDelimiter(line, ',');
@@ -401,14 +401,20 @@ export class ZonDecoder {
   }
 
   /**
-   * Check if string is a URL.
+   * Checks if string is a URL.
+   * 
+   * @param s - String to check
+   * @returns True if URL format
    */
   private _isURL(s: string): boolean {
     return /^https?:\/\//.test(s) || /^[\/]/.test(s);
   }
 
   /**
-   * Check if string is a timestamp with colons.
+   * Checks if string is a timestamp.
+   * 
+   * @param s - String to check
+   * @returns True if timestamp format
    */
   private _isTimestamp(s: string): boolean {
     return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s) || /^\d{2}:\d{2}:\d{2}/.test(s);
@@ -417,16 +423,21 @@ export class ZonDecoder {
 
 
   /**
-   * Reconstruct table from parsed rows.
+   * Reconstructs table from parsed rows.
+   * 
+   * @param table - Table information
+   * @returns Array of reconstructed objects
    */
   private _reconstructTable(table: TableInfo): any[] {
     return table.rows.map(row => this._unflatten(row));
   }
 
   /**
-   * Recursive parser for YAML-like ZON nested format.
-   * - Dict: {key:val,key:val}
-   * - List: [val,val]
+   * Recursively parses ZON nested structures.
+   * 
+   * @param text - Text to parse
+   * @param depth - Current nesting depth
+   * @returns Parsed value
    */
   private _parseZonNode(text: string, depth: number = 0): any {
     if (depth > 100) {
@@ -552,7 +563,11 @@ export class ZonDecoder {
   }
 
   /**
-   * Find first occurrence of delimiter outside quotes.
+   * Finds first occurrence of delimiter outside quotes.
+   * 
+   * @param text - Text to search
+   * @param delim - Delimiter to find
+   * @returns Index of delimiter or -1
    */
   private _findDelimiter(text: string, delim: string): number {
     let inQuote = false;
@@ -590,7 +605,11 @@ export class ZonDecoder {
 }
 
   /**
-   * Split text by delimiter, respecting quotes and nesting.
+   * Splits text by delimiter while respecting quotes and nesting.
+   * 
+   * @param text - Text to split
+   * @param delim - Delimiter character
+   * @returns Array of split parts
    */
   private _splitByDelimiter(text: string, delim: string): string[] {
     const parts: string[] = [];
@@ -646,7 +665,10 @@ export class ZonDecoder {
 }
 
   /**
-   * Parse a primitive value (T/F/null/number/string) without checking for ZON structure.
+   * Parses a primitive value.
+   * 
+   * @param val - Value string to parse
+   * @returns Parsed primitive value
    */
   private _parsePrimitive(val: string): any {
     const trimmed = val.trim();
@@ -689,7 +711,10 @@ export class ZonDecoder {
   }
 
   /**
-   * Parse a cell value. Handles primitives and delegates complex types.
+   * Parses a cell value including complex types.
+   * 
+   * @param val - Value string to parse
+   * @returns Parsed value
    */
   private _parseValue(val: string): any {
     const trimmed = val.trim();
@@ -777,7 +802,10 @@ export class ZonDecoder {
   }
 
   /**
-   * Unflatten dictionary with dotted keys.
+   * Unflattens dictionary with dotted keys.
+   * 
+   * @param d - Flattened dictionary
+   * @returns Unflattened object
    */
   private _unflatten(d: Record<string, any>): any {
     const result: any = {};
@@ -851,9 +879,11 @@ export class ZonDecoder {
 }
 
 /**
- * Convenience function to decode ZON v1.0.2 format to original data.
+ * Decodes ZON format string to original data v1.0.5.
+ * 
  * @param data - ZON format string
- * @param options - Decode options (strict mode, etc.)
+ * @param options - Decode options
+ * @returns Decoded data
  */
 export function decode(data: string, options?: DecodeOptions): any {
   return new ZonDecoder(options).decode(data);

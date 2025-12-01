@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { encode } from '../src/index';
@@ -6,15 +5,13 @@ const datasets = require('../benchmarks/datasets');
 
 const EXAMPLES_DIR = path.join(process.cwd(), 'examples');
 
-// Ensure examples directory exists
 if (!fs.existsSync(EXAMPLES_DIR)) {
   fs.mkdirSync(EXAMPLES_DIR);
 }
 
-// Additional simple datasets
 const simpleKeyValue = {
   name: "ZON Format",
-  version: "1.0.0",
+  version: "1.0.5",
   active: true,
   score: 98.5,
   description: null
@@ -30,7 +27,6 @@ const simpleTable = [
   { id: 3, name: "Charlie", role: "Guest" }
 ];
 
-// List of examples to generate (Low to High complexity)
 const employees = [
   { id: 101, name: "John Doe", department: "Engineering", salary: 85000, active: true },
   { id: 102, name: "Jane Smith", department: "Marketing", salary: 72000, active: true },
@@ -94,7 +90,6 @@ const heavilyNested = {
   }
 };
 
-// List of examples to generate (Low to High complexity)
 const examples = [
   { name: '01_simple_key_value', data: simpleKeyValue, desc: 'Simple Key-Value Object' },
   { name: '02_array_of_primitives', data: arrayOfPrimitives, desc: 'Array of Strings' },
@@ -115,9 +110,9 @@ const examples = [
         nulls: [null],
         strings: [
           "", " ", "simple", "with spaces", "with, comma", "with: colon",
-          "with \"quotes\"", "with 'single quotes'", "with \n newline",
+          "with \"quotes\"", "with 'single quotes'", "with \\n newline",
           "https://example.com/path?query=1&param=2",
-          "special: !@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`"
+          "special: !@#$%^&*()_+{}[]|\\\\:;\"'<>,.?/~`"
         ]
       },
       edge_cases: {
@@ -158,7 +153,7 @@ const examples = [
             type: "leaf",
             data: [
               { x: 1, y: 2 },
-              { x: 3, y: 4, z: 5 }, // Mixed keys
+              { x: 3, y: 4, z: 5 },
               { x: 6 }
             ]
           }
@@ -178,16 +173,16 @@ const examples = [
         "Zalgo: H̴e̴l̴l̴o̴ ̴W̴o̴r̴l̴d̴"
       ],
       control_chars: [
-        "Null: \u0000",
-        "Backspace: \b",
-        "Form Feed: \f",
-        "Newline: \n",
-        "Carriage Return: \r",
-        "Tab: \t",
-        "Vertical Tab: \v"
+        "Null: \\u0000",
+        "Backspace: \\b",
+        "Form Feed: \\f",
+        "Newline: \\n",
+        "Carriage Return: \\r",
+        "Tab: \\t",
+        "Vertical Tab: \\v"
       ],
       json_injection: [
-        "{\"key\": \"value\"}",
+        "{\\\"key\\\": \\\"value\\\"}",
         "[1, 2, 3]",
         "null",
         "true",
@@ -202,7 +197,7 @@ const examples = [
       ],
       path_traversal: [
         "../../etc/passwd",
-        "..\\..\\windows\\system32\\config\\sam"
+        "..\\\\..\\\\windows\\\\system32\\\\config\\\\sam"
       ]
     },
     desc: 'Nasty Strings (Unicode, Injection, Control Chars)'
@@ -220,7 +215,7 @@ const examples = [
   }
 ];
 
-console.log(`Generating examples in ${EXAMPLES_DIR}...\n`);
+console.log(`Generating examples in ${EXAMPLES_DIR}...\\n`);
 
 examples.forEach((ex, index) => {
   const jsonPath = path.join(EXAMPLES_DIR, `${ex.name}.json`);
@@ -239,4 +234,4 @@ examples.forEach((ex, index) => {
   console.log('---');
 });
 
-console.log('\nDone! View the examples in the "examples/" folder.');
+console.log('\\nDone! View the examples in the \"examples/\" folder.');

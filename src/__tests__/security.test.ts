@@ -10,8 +10,6 @@ describe('Security & Robustness', () => {
       const decoded = decode(malicious);
       // @ts-ignore
       expect({}.polluted).toBeUndefined();
-      // Accessing __proto__ on a plain object returns Object.prototype, which is expected.
-      // The key is that it shouldn't have been modified.
       // @ts-ignore
       expect(Object.prototype['polluted']).toBeUndefined();
     });
@@ -29,7 +27,6 @@ describe('Security & Robustness', () => {
 
   describe('Denial of Service (DoS)', () => {
     test('should throw on deep nesting in decoder', () => {
-      // Create a deeply nested string: [[[[...]]]]
       const depth = 150;
       const deepZon = '['.repeat(depth) + ']' + ']'.repeat(depth - 1);
       

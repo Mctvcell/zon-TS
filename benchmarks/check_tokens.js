@@ -4,6 +4,13 @@ const { encode: encodeTokens } = require('gpt-tokenizer');
 const { encodeToCSV } = require('./csv-encoder');
 const { unifiedDataset } = require('./datasets');
 
+/**
+ * Counts tokens for data in specified format.
+ * 
+ * @param {any} data - Data to encode
+ * @param {string} format - Format name (ZON, TOON, JSON, CSV)
+ * @returns {number|string} Token count or 'N/A'
+ */
 function countTokens(data, format) {
   let encoded;
   if (format === 'ZON') encoded = encodeZon(data);

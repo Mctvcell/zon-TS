@@ -12,18 +12,14 @@ describe('ZON Schema Validation', () => {
     it('should validate numbers', () => {
       const schema = zon.number();
       expect(validate(123, schema).success).toBe(true);
-      // '123' string decodes to number 123, so it should pass
       expect(validate('123', schema).success).toBe(true);
-      // '"123"' string decodes to string "123", so it should fail
       expect(validate('"123"', schema).success).toBe(false);
     });
 
     it('should validate booleans', () => {
       const schema = zon.boolean();
       expect(validate(true, schema).success).toBe(true);
-      // 'true' string decodes to boolean true, so it should pass
       expect(validate('true', schema).success).toBe(true);
-      // '"true"' string decodes to string "true", so it should fail
       expect(validate('"true"', schema).success).toBe(false);
     });
   });
@@ -121,7 +117,6 @@ active:T
       
       expect(result.success).toBe(false);
       if (!result.success) {
-        // This is the critical part for "LLM Evals"
         expect(result.error).toContain("Expected number at age");
       }
     });

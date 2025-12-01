@@ -1,7 +1,3 @@
-/**
- * ZON Exceptions
- */
-
 export interface ZonDecodeErrorDetails {
   code?: string;
   line?: number;

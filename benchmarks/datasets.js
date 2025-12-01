@@ -1,8 +1,3 @@
-/**
- * Unified Dataset for ZON Benchmarks
- * Combines tabular, nested, and time-series data into a single structure.
- */
-
 const unifiedDataset = {
   metadata: {
     systemId: "SYS-CORE-001",

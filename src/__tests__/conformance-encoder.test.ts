@@ -1,16 +1,11 @@
 import { encode } from '../index';
 
-/**
- * Conformance tests based on FORMAL_SPEC.md §11.1 Encoder Checklist
- */
 describe('Encoder Conformance (§11.1)', () => {
   test('should emit UTF-8 with LF line endings', () => {
     const data = { a: 1, b: 2 };
     const encoded = encode(data);
     
-    // Should use LF, not CRLF
     expect(encoded).not.toContain('\r\n');
-    // Should be a string (UTF-8 compatible)
     expect(typeof encoded).toBe('string');
   });
 
@@ -35,12 +30,10 @@ describe('Encoder Conformance (§11.1)', () => {
     const data = { int: 42, float: 3.14, big: 1000000 };
     const encoded = encode(data);
     
-    // No scientific notation
     expect(encoded).toContain('1000000');
     expect(encoded).not.toContain('1e6');
     expect(encoded).not.toContain('1e+6');
     
-    // Has decimal for floats
     expect(encoded).toContain('3.14');
   });
 
@@ -62,7 +55,6 @@ describe('Encoder Conformance (§11.1)', () => {
     };
     const encoded = encode(data);
     
-    // Should have table marker
     expect(encoded).toMatch(/users:@\(\d+\)/);
     expect(encoded).toContain('id,name');
   });
@@ -88,7 +80,6 @@ describe('Encoder Conformance (§11.1)', () => {
     };
     const encoded = encode(data);
     
-    // Columns should be sorted: a, m, z
     expect(encoded).toMatch(/records:@\(1\):a,m,z/);
   });
 
@@ -101,10 +92,7 @@ describe('Encoder Conformance (§11.1)', () => {
     const encoded = encode(data);
     
     expect(encoded).toContain('"a,b"');
-    // v2.0.5: Colons are allowed unquoted
-    // expect(encoded).toContain('"x:y"'); 
     expect(encoded).toContain('x:y');
-    // Uses quote doubling: " becomes ""
     expect(encoded).toContain('"say ""hi"""');
   });
 
@@ -112,7 +100,6 @@ describe('Encoder Conformance (§11.1)', () => {
     const data = { text: 'he said "hello"' };
     const encoded = encode(data);
     
-    // Uses quote doubling 
     expect(encoded).toContain('""hello""');
   });
 
@@ -129,7 +116,6 @@ describe('Encoder Conformance (§11.1)', () => {
     const data = {};
     const encoded = encode(data);
     
-    // Empty object is empty string in ZON
     expect(encoded).toBe('');
   });
 

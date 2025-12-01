@@ -5,6 +5,9 @@ const { unifiedDataset } = require('./datasets');
 
 const OUTPUT_FILE = path.join(__dirname, 'questions-309.js');
 
+/**
+ * Generates benchmark questions using LLM.
+ */
 async function generateQuestions() {
   const client = new AzureAIClient();
   const dataStr = JSON.stringify(unifiedDataset, null, 2);
@@ -34,22 +37,17 @@ async function generateQuestions() {
 
   console.log('🚀 Generating 309 questions with GPT-5...');
   try {
-    // Requesting a large token limit to accommodate 200 questions
-    const result = await client.query('gpt-5-nano', prompt, 16000); 
-    
+    const result = await client.query('gpt-5-nano', prompt, 16000);
+
     let jsonStr = result.answer;
-    // Clean up markdown if present
     if (jsonStr.startsWith('```json')) {
-      jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '');
+      jsonStr = jsonStr.replace(/^```json\\n/, '').replace(/\\n```$/, '');
     }
-    
+
     const questions = JSON.parse(jsonStr);
     console.log(`✅ Generated ${questions.length} questions.`);
-    
+
     const fileContent = `
-/**
- * Auto-generated 200 Benchmark Questions
- */
 const questions = ${JSON.stringify(questions, null, 2)};
 
 module.exports = { unifiedDataset: questions };
@@ -57,7 +55,7 @@ module.exports = { unifiedDataset: questions };
 
     fs.writeFileSync(OUTPUT_FILE, fileContent);
     console.log(`💾 Saved to ${OUTPUT_FILE}`);
-    
+
   } catch (e) {
     console.error('❌ Generation failed:', e);
   }

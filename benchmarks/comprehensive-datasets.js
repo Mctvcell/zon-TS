@@ -1,15 +1,3 @@
-/**
- * Comprehensive Benchmark Datasets
- * 
- * Matrix of datasets covering:
- * - Size: small (10-50 rows), medium (100-500 rows), large (1000-5000 rows)
- * - Structure: 6 combinations of uniformity and nesting
- */
-
-// ============================================================================
-// SMALL-SIMPLE DATASETS (10-50 rows, 3-8 columns)
-// ============================================================================
-
 const smallSimpleUniformFlat = {
   employees: Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
@@ -84,10 +72,6 @@ const smallSimpleNonuniformNestedUniform = {
     { id: 6, title: 'Documentation', assignee: { name: 'Frank', team: 'DevRel' }, priority: 'low', tags: ['docs'] }
   ]
 };
-
-// ============================================================================
-// MEDIUM-COMPLEX DATASETS (100-500 rows, 8-15 columns)
-// ============================================================================
 
 const mediumComplexUniformFlat = {
   transactions: Array.from({ length: 200 }, (_, i) => ({
@@ -231,10 +215,6 @@ const mediumComplexNonuniformNestedUniform = {
     return reading;
   })
 };
-
-// ============================================================================
-// LARGE-COMPLEX DATASETS (1000-5000 rows, 15-25 columns)
-// ============================================================================
 
 const largeComplexUniformFlat = {
   sales: Array.from({ length: 2000 }, (_, i) => ({
@@ -422,7 +402,6 @@ const largeComplexNonuniformNestedUniform = {
   })
 };
 
-// Export all datasets
 module.exports = {
   // Small-Simple
   smallSimpleUniformFlat,
