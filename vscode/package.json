@@ -1,8 +1,8 @@
 {
   "name": "zon-format",
   "displayName": "ZON Format",
-  "description": "Syntax highlighting for ZON (Z-Object Notation) files",
-  "version": "1.0.0",
+  "description": "Syntax highlighting for ZON (Zero Overhead Notation) files",
+  "version": "1.1.0",
   "publisher": "zon-format",
   "engines": {
     "vscode": "^1.75.0"
@@ -13,17 +13,17 @@
   "contributes": {
     "languages": [
       {
-        "id": "zon",
-        "aliases": ["ZON", "zon"],
-        "extensions": [".zon", ".zonf"],
+        "id": "zonf",
+        "aliases": ["ZONF", "zonf"],
+        "extensions": [".zonf"],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "zon",
-        "scopeName": "source.zon",
-        "path": "./syntaxes/zon.tmLanguage.json"
+        "language": "zonf",
+        "scopeName": "source.zonf",
+        "path": "./syntaxes/zonf.tmLanguage.json"
       }
     ]
   }

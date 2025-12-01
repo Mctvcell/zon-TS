@@ -354,6 +354,12 @@ For nested objects and arrays, ZON omits the redundant colon, creating a cleaner
 user{name:Alice,roles[admin,dev]}
 ```
 (Note: `user{...}` instead of `user:{...}`)
+
+### Developer Experience
+ZON treats the format as a first-class language:
+- **VS Code Extension**: Syntax highlighting makes `.zonf` files readable.
+- **CLI**: `zon stats` gives immediate feedback on compression savings.
+- **Formatter**: `zon format` canonicalizes output for consistent diffs.
 - 💾 **Most Token-Efficient**: 4-15% fewer tokens than TOON across all tokenizers
 - 🎯 **JSON Data Model**: Encodes the same objects, arrays, and primitives as JSON with deterministic, lossless round-trips
 - 📐 **Minimal Syntax**: Explicit headers (`@(N)` for count, column list) eliminate ambiguity for LLMs

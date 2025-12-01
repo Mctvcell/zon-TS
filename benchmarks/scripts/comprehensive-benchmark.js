@@ -133,19 +133,19 @@ for (const [categoryName, datasets] of Object.entries(categories)) {
   console.log(`\\n📈 ${categoryName}:`);
   
   const avgGPT = {
-    zonWins: datasets.filter(d => results.byDataset[d].gpt4o.zon < results.byDataset[d].gpt4o.toon).length,
+    zonWins: datasets.filter(d => results.byDataset[d].gpt4o.zonf < results.byDataset[d].gpt4o.toon).length,
     avgSavingsVsTOON: datasets.reduce((sum, d) => sum + results.byDataset[d].gpt4o.savingsVsTOON, 0) / datasets.length,
     avgSavingsVsJSON: datasets.reduce((sum, d) => sum + results.byDataset[d].gpt4o.savingsVsJSON, 0) / datasets.length
   };
   
   const avgClaude = {
-    zonWins: datasets.filter(d => results.byDataset[d].claude.zon < results.byDataset[d].claude.toon).length,
+    zonWins: datasets.filter(d => results.byDataset[d].claude.zonf < results.byDataset[d].claude.toon).length,
     avgSavingsVsTOON: datasets.reduce((sum, d) => sum + results.byDataset[d].claude.savingsVsTOON, 0) / datasets.length,
     avgSavingsVsJSON: datasets.reduce((sum, d) => sum + results.byDataset[d].claude.savingsVsJSON, 0) / datasets.length
   };
   
   const avgLlama = {
-    zonWins: datasets.filter(d => results.byDataset[d].llama.zon < results.byDataset[d].llama.toon).length,
+    zonWins: datasets.filter(d => results.byDataset[d].llama.zonf < results.byDataset[d].llama.toon).length,
     avgSavingsVsTOON: datasets.reduce((sum, d) => sum + results.byDataset[d].llama.savingsVsTOON, 0) / datasets.length,
     avgSavingsVsJSON: datasets.reduce((sum, d) => sum + results.byDataset[d].llama.savingsVsJSON, 0) / datasets.length
   };
@@ -159,19 +159,19 @@ console.log(`\\n\\n📊 OVERALL PERFORMANCE:`);
 
 const allDatasets = datasetNames;
 const overallGPT = {
-  zonWins: allDatasets.filter(d => results.byDataset[d].gpt4o.zon < results.byDataset[d].gpt4o.toon).length,
+  zonWins: allDatasets.filter(d => results.byDataset[d].gpt4o.zonf < results.byDataset[d].gpt4o.toon).length,
   avgSavingsVsTOON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].gpt4o.savingsVsTOON, 0) / allDatasets.length,
   avgSavingsVsJSON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].gpt4o.savingsVsJSON, 0) / allDatasets.length
 };
 
 const overallClaude = {
-  zonWins: allDatasets.filter(d => results.byDataset[d].claude.zon < results.byDataset[d].claude.toon).length,
+  zonWins: allDatasets.filter(d => results.byDataset[d].claude.zonf < results.byDataset[d].claude.toon).length,
   avgSavingsVsTOON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].claude.savingsVsTOON, 0) / allDatasets.length,
   avgSavingsVsJSON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].claude.savingsVsJSON, 0) / allDatasets.length
 };
 
 const overallLlama = {
-  zonWins: allDatasets.filter(d => results.byDataset[d].llama.zon < results.byDataset[d].llama.toon).length,
+  zonWins: allDatasets.filter(d => results.byDataset[d].llama.zonf < results.byDataset[d].llama.toon).length,
   avgSavingsVsTOON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].llama.savingsVsTOON, 0) / allDatasets.length,
   avgSavingsVsJSON: allDatasets.reduce((sum, d) => sum + results.byDataset[d].llama.savingsVsJSON, 0) / allDatasets.length
 };
