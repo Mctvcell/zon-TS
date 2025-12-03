@@ -1,0 +1,1 @@
+config{database{primary{host:db-01,port:5432,ssl:true},replica{host:db-02,port:5432,ssl:true}},features{beta:true,deprecated[v1,v2]}}

@@ -79,6 +79,68 @@ F,2,Bob
  const prompt = encodeLLM(data, { task: 'retrieval' });
  ```
  
+ ### `encodeBinary(input: any): Uint8Array`
+ 
+ Encodes data to Binary ZON format (ZON-B).
+ 
+ **Returns:** `Uint8Array` - Compact binary buffer
+ 
+ ### `encodeAdaptive(input: any, options?: AdaptiveOptions): string | AdaptiveResult`
+ 
+ Automatically selects the best encoding mode based on data complexity and user preferences.
+ 
+ **Options:**
+ - `mode`: `'auto' | 'compact' | 'readable' | 'llm-optimized'` (default: `'auto'`)
+ - `indent`: `number` - Indentation spaces for readable mode (default: `2`)
+ - `debug`: `boolean` - Return detailed analysis (default: `false`)
+ 
+ **Returns:** `string` (or `AdaptiveResult` if `debug: true`)
+ 
+ **Mode Descriptions:**
+ 
+ | Mode | Description | Best For |
+ |------|-------------|----------|
+ | `auto` | Analyzes data and picks best mode automatically | General purpose, mixed data |
+ | `compact` | Maximum compression (tables, T/F, delta encoding) | Production APIs, token efficiency |
+ | `readable` | YAML-like syntax with indentation | Config files, human editing |
+ | `llm-optimized` | Balances clarity and tokens (true/false not T/F) | AI workflows, prompts |
+ 
+ **Examples:**
+ 
+ ```typescript
+ import { encodeAdaptive } from 'zon-format';
+ 
+ const data = {
+   users: [
+     { id: 1, name: "Alice", active: true },
+     { id: 2, name: "Bob", active: false }
+   ]
+ };
+ 
+ // Auto mode - let ZON decide
+ const auto = encodeAdaptive(data, { mode: 'auto' });
+ 
+ // Compact mode - maximum compression
+ const compact = encodeAdaptive(data, { mode: 'compact' });
+ 
+ // Readable mode - human-friendly
+ const readable = encodeAdaptive(data, { mode: 'readable' });
+ 
+ // LLM-optimized - best for AI
+ const llm = encodeAdaptive(data, { mode: 'llm-optimized' });
+ 
+ // Readable with custom indentation
+ const indented = encodeAdaptive(data, { mode: 'readable', indent: 4 });
+ ```
+ 
+ **Debug Mode:**
+ 
+ ```typescript
+ const result = encodeAdaptive(data, { mode: 'auto', debug: true });
+ console.log(result.decisions);  // See why ZON chose this mode
+ console.log(result.output);     // The encoded string
+ ```
+ 
  ---
 
 ## Decoding Functions
@@ -141,6 +203,38 @@ const data = decode(zonData, { strict: false });
 - ✅ **Type preservation**: Numbers, booleans, null, strings
 - ✅ **100% accuracy**: No data loss or corruption
 
+### `decodeBinary(buffer: Uint8Array): any`
+
+Decodes Binary ZON data back to JavaScript objects.
+
+**Example:**
+```typescript
+import { decodeBinary } from 'zon-format';
+const data = decodeBinary(buffer);
+```
+
+---
+
+## Versioning APIs
+
+### `embedVersion(data: any, version: string, schemaId?: string): any`
+
+Embeds version metadata into the data structure.
+
+### `extractVersion(data: any): VersionMetadata | null`
+
+Extracts version metadata from data.
+
+### `ZonMigrationManager`
+
+Class for managing schema migrations.
+
+```typescript
+const manager = new ZonMigrationManager();
+manager.registerMigration('1.0', '2.0', migrateFn);
+const migrated = manager.migrate(data, '2.0');
+```
+
 ---
 
 ## Schema Validation API
@@ -193,6 +287,19 @@ if (result.success) {
   // result.data is typed as { name: string, role: 'admin' | 'user' }
 }
 ```
+
+---
+
+## Helper Utilities
+
+### `compareFormats(data: any): FormatStats`
+Returns size comparison between ZON, JSON, and Binary.
+
+### `analyze(data: any): ComplexityMetrics`
+Analyzes data structure complexity (depth, irregularity).
+
+### `validateZon(zon: string): ValidationResult`
+Validates ZON syntax and structure with detailed error reporting.
 
 ---
 

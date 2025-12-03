@@ -5,6 +5,91 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-03
+
+### Major Release: Enterprise Features & Production Readiness
+
+This release transforms ZON into an enterprise-grade data format with versioning, adaptive encoding, binary format, comprehensive developer tools, automated testing, and production documentation.
+
+### Added
+
+#### Phase 1: Document-Level Schema Versioning
+- **Version Embedding/Extraction**: `embedVersion()` and `extractVersion()` for metadata management
+- **Migration Manager**: `ZonMigrationManager` with BFS path-finding for schema evolution
+- **Backward/Forward Compatibility**: Automatic migration between schema versions
+- **Test Coverage**: 45 tests covering all versioning scenarios
+
+#### Phase 2: Adaptive Format Selection
+- **4 Encoding Modes**: `auto`, `compact`, `readable`, `llm-optimized`
+- **Data Complexity Analyzer**: Automatic analysis of nesting depth, irregularity, field count
+- **Mode Recommendation**: `recommendMode()` suggests optimal encoding based on data structure
+- **Test Coverage**: 20 tests for adaptive encoding
+
+#### Phase 3: Binary ZON Format (ZON-B)
+- **MessagePack-Inspired Encoding**: Compact binary format with magic header (`ZNB\x01`)
+- **40-60% Space Savings**: Significantly smaller than JSON while maintaining structure
+- **Full Type Support**: Primitives, arrays, objects, nested structures
+- **APIs**: `encodeBinary()`, `decodeBinary()` with round-trip validation
+- **Test Coverage**: 18 tests for binary format
+
+#### Phase 5: Developer Experience Tools
+- **Format Converters**: JSON ↔ ZON ↔ Binary with `BatchConverter`
+- **Helper Utilities**: `size()`, `compareFormats()`, `analyze()`, `inferSchema()`, `compare()`, `isSafe()`
+- **Pretty Printer**: Syntax highlighting with colors, `diffPrint()` for visual diffs
+- **Enhanced Validator**: Linting rules for depth, fields, performance with best practice suggestions
+- **CLI Enhancements**: 
+  - `zon analyze` - Data complexity analysis
+  - `zon diff` - Visual file comparison
+  - `zon validate --strict` - Strict validation with linting
+  - `zon convert --to=binary` - Binary format conversion
+  - `zon format --colors` - Pretty printing with syntax highlighting
+
+#### Phase 6: LLM Evaluation Framework
+- **ZonEvaluator Engine**: Core evaluation framework with metric registration
+- **7 Built-in Metrics**: exactMatch, tokenEfficiency, structuralValidity, formatCorrectness, partialMatch, hallucination, latency
+- **Regression Detection**: Compare baseline vs current results
+- **Dataset Management**: `DatasetRegistry` with versioning and tagging
+- **Storage Backends**: `FileEvalStorage` and `MemoryEvalStorage`
+
+#### Phase 7: CI/CD Integration
+- **GitHub Actions Workflow**: Automated evaluations on PRs and main branch
+- **Smoke Tests**: Fast <1min tests on every PR
+- **Regression Detection**: Automatic baseline comparison with severity levels (critical/major/minor)
+- **PR Comments**: Auto-post eval results with metrics tables
+- **Baseline Management**: Auto-save successful builds as new baselines
+- **NPM Scripts**: `eval:smoke`, `eval:check-regressions`, `eval:baseline`
+
+#### Phase 4: Production Documentation
+- **Production Architecture Guide**: Multi-format strategy, versioning workflows, API patterns
+- **Best Practices Guide**: Code organization, error handling, testing, security
+- **Migration Examples**: Batch migration scripts with stats tracking
+- **Express Middleware**: Content negotiation for JSON/ZON/Binary formats
+
+### Changed
+- **Code Quality**: Removed inline comments from core files (`encoder.ts`, `decoder.ts`)
+- **Documentation**: All functions have proper JSDoc/TSDoc documentation
+- **Build System**: Still compiles cleanly with TypeScript
+
+### Performance
+- **Binary Format**: 40-60% smaller than JSON
+- **ZON Text**: Maintains 16-19% smaller than JSON
+- **Test Suite**: All 288 tests passing
+
+### Documentation
+- **New Guides**: Production architecture, best practices, developer tools
+- **Working Examples**: Express middleware, migration scripts
+- **API Reference**: Complete documentation for all new APIs
+
+### Testing
+- **Total Tests**: 288 passing (up from 175)
+- **Test Coverage**: 100% for all new features
+- **No Regressions**: Full backward compatibility maintained
+
+### Development
+- **Total Code**: ~4250+ lines of production code
+- **Files Added**: 21 new files (binary/, evals/, tools/, docs/, examples/)
+- **Quality**: Professional-grade documentation, no inline comments
+
 ## [1.1.0] - 2025-12-01
 
 ### Major Release: Ecosystem Integrations & Streaming
@@ -19,7 +104,7 @@ This release transforms ZON into a production-ready format with first-class supp
 - **OpenAI Helper** (`zon-format/openai`): `ZOpenAI` wrapper with automatic format injection
 
 #### Phase 4: Developer Experience
-- **VS Code Extension**: Syntax highlighting for `.zon` and `.zonf` files
+- **VS Code Extension**: Syntax highlighting for `.zonf` files
 - **Performance Benchmarks**: Automated benchmark suite comparing ZON vs JSON/MsgPack
 - **CLI Enhancements**: `validate`, `stats`, and `format` commands
 

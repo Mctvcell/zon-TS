@@ -1,9 +1,17 @@
 import { TABLE_MARKER, META_SEPARATOR, MAX_DOCUMENT_SIZE, MAX_LINE_LENGTH, MAX_ARRAY_LENGTH, MAX_OBJECT_KEYS, MAX_NESTING_DEPTH } from './constants';
 import { ZonDecodeError } from './exceptions';
 import { parseValue } from './utils';
+import { extractVersion, stripVersion, type ZonDocumentMetadata } from './versioning';
 
 export interface DecodeOptions {
   strict?: boolean;
+  /** Extract version metadata from decoded data (default: false) */
+  extractMetadata?: boolean;
+}
+
+export interface DecodeResult {
+  data: any;
+  metadata?: ZonDocumentMetadata;
 }
 
 interface TableInfo {
@@ -30,9 +38,10 @@ export class ZonDecoder {
    * Decodes ZON format string to original data structure.
    * 
    * @param zonStr - ZON formatted string
-   * @returns Decoded data
+   * @param options - Optional decode options
+   * @returns Decoded data or DecodeResult if extractMetadata is true
    */
-  decode(zonStr: string): any {
+  decode(zonStr: string, options?: DecodeOptions): any | DecodeResult {
     if (!zonStr) {
       return {};
     }
@@ -44,7 +53,7 @@ export class ZonDecoder {
       );
     }
 
-    const lines = zonStr.trim().split('\n');
+    const lines = this._splitByDelimiter(zonStr.trim(), '\n');
     if (lines.length === 0) {
       return {};
     }
@@ -67,7 +76,9 @@ export class ZonDecoder {
     let currentTableName: string | null = null;
     let pendingDictionaries = new Map<string, string[]>();
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      this.currentLine = i + 1; // Update current line number for error reporting
+      const line = lines[i];
       const trimmedLine = line.trimEnd();
 
       if (trimmedLine.length > MAX_LINE_LENGTH) {
@@ -114,8 +125,8 @@ export class ZonDecoder {
         let depth = 0;
         let inQuote = false;
         
-        for (let i = 0; i < trimmedLine.length; i++) {
-          const char = trimmedLine[i];
+        for (let j = 0; j < trimmedLine.length; j++) {
+          const char = trimmedLine[j];
           if (char === '"') inQuote = !inQuote;
           if (!inQuote) {
             if (char === '{' || char === '[') depth++;
@@ -123,13 +134,13 @@ export class ZonDecoder {
             
             if (depth === 1 && (char === '{' || char === '[')) {
                if (splitIdx === -1) {
-                 splitIdx = i;
+                 splitIdx = j;
                  splitChar = char;
                  break;
                }
             }
             if (char === ':' && depth === 0) {
-               splitIdx = i;
+               splitIdx = j;
                splitChar = ':';
                break;
             }
@@ -148,14 +159,60 @@ export class ZonDecoder {
              val = trimmedLine.substring(splitIdx).trim();
           }
           
+          // Check for multiline value (indented block)
+          if (!val && !trimmedLine.trim().endsWith('{') && !trimmedLine.trim().endsWith('[')) {
+             const currentIndent = line.search(/\S/);
+             if (i + 1 < lines.length) {
+                const nextIndent = lines[i+1].search(/\S/);
+                if (nextIndent > currentIndent) {
+                   // Consume indented block
+                   const blockLines: string[] = [];
+                   while (i + 1 < lines.length) {
+                      const nextLine = lines[i+1];
+                      
+                      // Check for empty lines
+                      if (!nextLine.trim()) {
+                         // Preserve empty lines as they might be separators
+                         blockLines.push('');
+                         i++;
+                         this.currentLine = i + 1;
+                         continue;
+                      }
+                      
+                      const nextLineIndent = nextLine.search(/\S/);
+                      if (nextLineIndent <= currentIndent) break;
+                      
+                      blockLines.push(nextLine);
+                      i++;
+                      this.currentLine = i + 1;
+                   }
+                   // Normalize indentation: strip the base indent from all lines
+                   const normalizedLines = blockLines.map((line, idx) => {
+                     if (!line.trim()) return line; // Preserve empty lines
+                     const lineIndent = line.search(/\S/);
+                     if (lineIndent === -1) return line; // No content
+                     // Strip nextIndent characters (the base indentation of the block)
+                     return lineIndent >= nextIndent ? line.substring(nextIndent) : line;
+                   });
+                   val = normalizedLines.join('\n');
+                }
+             }
+          }
+          
           if (val.startsWith(TABLE_MARKER)) {
             const [_, tableInfo] = this._parseTableHeader(val);
+            
+            if (pendingDictionaries.size > 0) {
+              tableInfo.dictionaries = new Map(pendingDictionaries);
+              pendingDictionaries.clear();
+            }
+
             currentTableName = key;
             currentTable = tableInfo;
             tables[currentTableName] = currentTable;
           } else {
             currentTable = null;
-            metadata[key] = this._parseValue(val);
+            metadata[key] = this._parseZonNode(val);
           }
         }
       }
@@ -173,6 +230,21 @@ export class ZonDecoder {
     }
 
     const result = this._unflatten(metadata);
+
+    if (options?.extractMetadata) {
+      const meta = extractVersion(result);
+      if (meta) {
+        return {
+          data: stripVersion(result),
+          metadata: meta
+        };
+      } else {
+        return {
+          data: result,
+          metadata: undefined
+        };
+      }
+    }
 
     if (Object.keys(result).length === 1 && 'data' in result && Array.isArray(result.data)) {
       return result.data;
@@ -389,7 +461,7 @@ export class ZonDecoder {
     for (const col of table.cols) {
       if (tokenIdx < tokens.length) {
         const tok = tokens[tokenIdx];
-        let val = this._parseValue(tok);
+        let val = this._parseZonNode(tok);
 
         if (table.dictionaries && table.dictionaries.has(col) && typeof val === 'number') {
           const dict = table.dictionaries.get(col)!;
@@ -485,18 +557,45 @@ export class ZonDecoder {
     }
 
     const trimmed = text.trim();
+    
     if (!trimmed) {
       return null;
     }
 
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      const content = trimmed.substring(1, trimmed.length - 1).trim();
-      if (!content) {
-        return {};
+      // Verify that the first brace matches the last brace
+      let depth = 0;
+      let matchIndex = -1;
+      let inQuote = false;
+      let quoteChar = '';
+      
+      for (let i = 0; i < trimmed.length; i++) {
+        const char = trimmed[i];
+        if (['"', "'"].includes(char)) {
+           if (!inQuote) { inQuote = true; quoteChar = char; }
+           else if (char === quoteChar) { inQuote = false; }
+        } else if (!inQuote) {
+           if (char === '{') depth++;
+           else if (char === '}') {
+              depth--;
+              if (depth === 0) {
+                 matchIndex = i;
+                 break;
+              }
+           }
+        }
       }
+      
+      // Only parse as single object if the matching brace is the last character
+      if (matchIndex === trimmed.length - 1) {
+        const content = trimmed.substring(1, trimmed.length - 1).trim();
+        if (!content) {
+          return {};
+        }
+
 
       const obj: Record<string, any> = {};
-      const pairs = this._splitByDelimiter(content, ',');
+      const pairs = this._splitObjectProperties(content);
 
       if (pairs.length > MAX_OBJECT_KEYS) {
         throw new ZonDecodeError(
@@ -564,6 +663,7 @@ export class ZonDecoder {
 
       return obj;
     }
+  }
 
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
       const content = trimmed.substring(1, trimmed.length - 1).trim();
@@ -571,7 +671,7 @@ export class ZonDecoder {
         return [];
       }
 
-      const items = this._splitByDelimiter(content, ',');
+      const items = this._splitByDelimiter(content, ',', true);
       
       if (items.length > MAX_ARRAY_LENGTH) {
         throw new ZonDecodeError(
@@ -583,8 +683,237 @@ export class ZonDecoder {
       return items.map(item => this._parseZonNode(item, depth + 1));
     }
 
+    // Check for implicit structure (multiline or colon-prefixed or dash-prefixed)
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[') && (trimmed.includes('\n') || trimmed.startsWith(':') || trimmed.startsWith('- '))) {
+       // Check for dash-separated list (YAML-like)
+       // Use original text to preserve indentation
+       const lines = text.split('\n');
+       const validLines = lines.filter(l => l.trim().length > 0);
+       
+       if (validLines.length > 0 && validLines[0].trim().startsWith('- ')) {
+          // It's a dash-separated list
+          const reconstructed: any[] = [];
+          let currentItemLines: string[] = [];
+          
+          // Determine base indentation from the first dash line
+          let baseIndent = -1;
+          for (const line of validLines) {
+            if (line.trim().startsWith('- ')) {
+              baseIndent = line.search(/\S/);
+              break;
+            }
+          }
+
+          if (baseIndent === -1) baseIndent = 0; // Should not happen given the check above
+          
+          for (const line of validLines) {
+             const indent = line.search(/\S/);
+             const cleanLine = line.trim();
+             
+             // Heuristic: If baseIndent is 0 (due to trim) and we have a complete previous line,
+             // and this line is indented, assume the indentation belongs to the block level (siblings).
+             if (baseIndent === 0 && currentItemLines.length === 1 && !currentItemLines[0].trim().endsWith(':')) {
+                if (indent > 0) {
+                   baseIndent = indent;
+                }
+             }
+
+             // Check if this is a new item: must start with '- ' AND have same indentation as base
+             if (cleanLine.startsWith('- ') && indent === baseIndent) {
+                // Start of new item
+                if (currentItemLines.length > 0) {
+                   reconstructed.push(this._parseZonNode(currentItemLines.join('\n'), depth + 1));
+                }
+                // Remove '- ' prefix (2 chars) and strip base indent
+                // The line is like "  - item". indent=2. baseIndent=2.
+                // We want "item".
+                // line.substring(baseIndent + 2) might work, but we should trimStart?
+                // cleanLine.substring(2).trim() gives "item".
+                currentItemLines = [cleanLine.substring(2).trim()]; 
+             } else {
+                // Continuation of current item
+                // Strip baseIndent characters to normalize indentation
+                let contentLine = line;
+                if (indent >= baseIndent) {
+                  contentLine = line.substring(baseIndent);
+                } else {
+                  // Indent is less than base? Should not happen for valid nested content.
+                  // Treat as is (or trim?)
+                  contentLine = line.trim();
+                }
+                currentItemLines.push(contentLine);
+             }
+          }
+          
+          if (currentItemLines.length > 0) {
+             reconstructed.push(this._parseZonNode(currentItemLines.join('\n'), depth + 1));
+          }
+          
+          return reconstructed;
+       }
+
+       // Check for implicit object (newline or comma separated)
+       const objPairs = this._splitObjectProperties(trimmed);
+       if (objPairs.length > 1 || (objPairs.length === 1 && objPairs[0].includes(':'))) {
+          // It's an object
+          const obj: Record<string, any> = {};
+          
+          for (const pair of objPairs) {
+             // Parse key:value
+             // Reuse logic from brace parsing?
+             // Or simple split by first colon?
+             // _splitObjectProperties returns "key: value" strings.
+             // We need to split by first colon, respecting quotes.
+             
+             let keyStr: string;
+             let valStr: string;
+             let splitIdx = -1;
+             let inQuote = false;
+             let quoteChar = '';
+             
+             for (let i = 0; i < pair.length; i++) {
+                const char = pair[i];
+                if (['"', "'"].includes(char)) {
+                   if (!inQuote) { inQuote = true; quoteChar = char; }
+                   else if (char === quoteChar) { inQuote = false; }
+                } else if (!inQuote && char === ':') {
+                   splitIdx = i;
+                   break;
+                }
+             }
+             
+             if (splitIdx !== -1) {
+                keyStr = pair.substring(0, splitIdx).trim();
+                valStr = pair.substring(splitIdx + 1).trim();
+                
+                // Handle implicit array item starting with dash in value?
+                // No, _parseZonNode handles that recursively.
+                
+                const key = this._parseValue(keyStr);
+                const val = this._parseZonNode(valStr, depth + 1);
+                obj[key] = val;
+             }
+          }
+          return obj;
+       }
+
+       // Try splitting by comma ONLY first (for arrays)
+       const items = this._splitByDelimiter(trimmed, ',', false);
+       
+       if (items.length > 1 || (items.length === 1 && items[0].startsWith(':'))) {
+          // Check if it looks like an object (all items are k:v)
+          let isObject = true;
+          const parsedItems: any[] = [];
+          
+          for (const item of items) {
+             const cleanItem = item.trim();
+             if (cleanItem.startsWith(':')) {
+                // Array item marker
+                isObject = false;
+                parsedItems.push(this._parseZonNode(cleanItem.substring(1), depth + 1));
+             } else {
+                // Check if item is an Implicit Object (multiline with multiple KVs)
+                // If an item contains newlines and looks like multiple KVs, then it's an object structure,
+                // so the parent must be an Array (list of objects).
+                if (cleanItem.includes('\n')) {
+                   const subItems = this._splitByDelimiter(cleanItem, '\n', false); // Split by newline to check structure
+                   // Filter empty lines
+                   const validSubItems = subItems.filter(s => s.trim().length > 0);
+                   
+                   if (validSubItems.length > 1) {
+                      // Check if sub-items look like KVs
+                      let allKVs = true;
+                      for (const sub of validSubItems) {
+                         const colonIdx = this._findDelimiter(sub.trim(), ':');
+                         if (colonIdx === -1 || colonIdx === 0) {
+                            allKVs = false;
+                            break;
+                         }
+                      }
+                      
+                      if (allKVs) {
+                         // Item is an Implicit Object.
+                         // So parent is an Array.
+                         isObject = false;
+                         parsedItems.push(this._parseZonNode(cleanItem, depth + 1));
+                         continue;
+                      }
+                   }
+                }
+
+                // Check for k:v pattern
+                const colonIdx = this._findDelimiter(cleanItem, ':');
+                if (colonIdx === -1 || colonIdx === 0) {
+                   isObject = false;
+                   parsedItems.push(this._parseZonNode(cleanItem, depth + 1));
+                } else {
+                   // Potential KV
+                   const key = cleanItem.substring(0, colonIdx).trim();
+                   if (!/^[a-zA-Z_][\w\.]*$/.test(key)) {
+                      isObject = false;
+                      parsedItems.push(this._parseZonNode(cleanItem, depth + 1));
+                   } else {
+                      // It's a KV pair
+                      parsedItems.push(cleanItem);
+                   }
+                }
+             }
+          }
+
+          if (isObject) {
+             // Parse as object
+             const obj: Record<string, any> = {};
+             for (const item of parsedItems) {
+                const colonIdx = this._findDelimiter(item, ':');
+                const keyStr = item.substring(0, colonIdx).trim();
+                const valStr = item.substring(colonIdx + 1).trim();
+                const key = this._parseValue(keyStr);
+                const val = this._parseZonNode(valStr, depth + 1);
+                obj[key] = val;
+             }
+             return obj;
+          } else {
+             // Return array
+             return parsedItems;
+          }
+       } else {
+          // Single item (no commas).
+          // Check if it's an Implicit Object (newline separated KVs).
+          const lines = this._splitByDelimiter(trimmed, '\n', false); // Split by newline
+          const validLines = lines.filter(l => l.trim().length > 0);
+          
+          if (validLines.length > 1) {
+             // Check if all lines are KVs
+             let allKVs = true;
+             for (const line of validLines) {
+                const colonIdx = this._findDelimiter(line.trim(), ':');
+                if (colonIdx === -1 || colonIdx === 0) {
+                   allKVs = false;
+                   break;
+                }
+             }
+             
+             if (allKVs) {
+                // Parse as Implicit Object
+                const obj: Record<string, any> = {};
+                for (const line of validLines) {
+                   const colonIdx = this._findDelimiter(line.trim(), ':');
+                   const keyStr = line.substring(0, colonIdx).trim();
+                   const valStr = line.substring(colonIdx + 1).trim();
+                   const key = this._parseValue(keyStr);
+                   const val = this._parseZonNode(valStr, depth + 1);
+                   obj[key] = val;
+                }
+                return obj;
+             }
+          }
+       }
+    }
+
     return this._parseValue(trimmed);
   }
+
+
 
   /**
    * Finds first occurrence of delimiter outside quotes.
@@ -598,91 +927,102 @@ export class ZonDecoder {
     let quoteChar: string | null = null;
     let depth = 0;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
 
-    if (char === '\\' && i + 1 < text.length) {
-      i++; // Skip next char
-      continue;
-    }
-
-    if (['"', "'"].includes(char)) {
-      if (!inQuote) {
-        inQuote = true;
-        quoteChar = char;
-      } else if (char === quoteChar) {
-        inQuote = false;
-        quoteChar = null;
+      if (char === '\\' && i + 1 < text.length) {
+        i++;
+        continue;
       }
-    } else if (!inQuote) {
-      if (['{', '['].includes(char)) {
-        depth++;
-      } else if (['}', ']'].includes(char)) {
-        depth--;
-      } else if (char === delim && depth === 0) {
+
+      if (['"', "'"].includes(char)) {
+        if (!inQuote) {
+          inQuote = true;
+          quoteChar = char;
+        } else if (char === quoteChar) {
+          inQuote = false;
+          quoteChar = null;
+        }
+      } else if (!inQuote && depth === 0 && char === delim) {
         return i;
       }
+
+      if (!inQuote) {
+        if (char === '{' || char === '[') depth++;
+        if (char === '}' || char === ']') depth--;
+      }
     }
+
+    return -1;
   }
-  return -1;
-}
 
   /**
    * Splits text by delimiter while respecting quotes and nesting.
    * 
    * @param text - Text to split
-   * @param delim - Delimiter character
+   * @param delim - Delimiter character (default: ',')
+   * @param splitByNewline - Whether to treat newline as delimiter (default: false)
    * @returns Array of split parts
    */
-  private _splitByDelimiter(text: string, delim: string): string[] {
+  private _splitByDelimiter(text: string, delim: string = ',', splitByNewline: boolean = false): string[] {
     const parts: string[] = [];
     const current: string[] = [];
     let inQuote = false;
     let quoteChar: string | null = null;
     let depth = 0;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    
-    if (char === '\\' && i + 1 < text.length) {
-      current.push(char);
-      current.push(text[++i]);
-      continue;
-    }
-
-    if (['"', "'"].includes(char)) {
-      if (!inQuote) {
-        inQuote = true;
-        quoteChar = char;
-      } else if (char === quoteChar) {
-        inQuote = false;
-        quoteChar = null;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      if (char === '\\' && i + 1 < text.length) {
+        current.push(char);
+        current.push(text[++i]);
+        continue;
       }
-      current.push(char);
-    } else if (!inQuote) {
-      if (['{', '['].includes(char)) {
-        depth++;
+
+      if (['"', "'"].includes(char)) {
+        if (!inQuote) {
+          inQuote = true;
+          quoteChar = char;
+        } else if (char === quoteChar) {
+          inQuote = false;
+          quoteChar = null;
+        }
         current.push(char);
-      } else if (['}', ']'].includes(char)) {
-        depth--;
-        current.push(char);
-      } else if (char === delim && depth === 0) {
-        parts.push(current.join(''));
-        current.length = 0;
+      } else if (!inQuote) {
+        if (['{', '['].includes(char)) {
+          depth++;
+          current.push(char);
+        } else if (['}', ']'].includes(char)) {
+          depth--;
+          current.push(char);
+        } else if ((char === delim || (splitByNewline && char === '\n')) && depth === 0) {
+          // Treat newline as delimiter if enabled
+        if (current.length > 0) {
+          // Only trim for comma delimiters, preserve whitespace for newline delimiters
+          const part = current.join('');
+          parts.push(delim === '\n' ? part : part.trim());
+          current.length = 0;
+        }
+        } else {
+          current.push(char);
+        }
       } else {
         current.push(char);
       }
-    } else {
-      current.push(char);
+    }
+
+    if (current.length > 0) {
+    const final = current.join('');
+    const trimmedFinal = final.trim();
+    if (trimmedFinal) {
+      // Only trim for comma delimiters, preserve whitespace for newline delimiters
+      parts.push(delim === '\n' ? final : trimmedFinal);
     }
   }
 
-  if (current.length > 0) {
-    parts.push(current.join(''));
+    return parts;
   }
-
-  return parts;
-}
 
   /**
    * Parses a primitive value.
@@ -700,18 +1040,14 @@ export class ZonDecoder {
     const trimmedVal = val.trim();
     const parsed = parseValue(val);
     
-    // If the value was explicitly quoted, it is a string.
-    // Do not attempt to parse it as a ZON node, even if it looks like one.
     if (trimmedVal.startsWith('"')) {
       return parsed;
     }
     
     if (typeof parsed === 'string') {
-      const trimmed = parsed.trim();
-      
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        return this._parseZonNode(trimmed);
-      }
+      // Don't recurse back to _parseZonNode to avoid infinite loops.
+      // _parseZonNode should handle structure before calling _parseValue.
+      return parsed;
     }
     
     return parsed;
@@ -781,15 +1117,123 @@ export class ZonDecoder {
 
     return result;
   }
-}
 
+  /**
+   * Checks if quotes are balanced in string.
+   */
+  private _areQuotesBalanced(s: string): boolean {
+    let inQuote = false;
+    let quoteChar = '';
+    
+    for (let i = 0; i < s.length; i++) {
+      const char = s[i];
+      if (char === '\\' && i + 1 < s.length) {
+        i++; continue;
+      }
+      if (['"', "'"].includes(char)) {
+        if (!inQuote) { inQuote = true; quoteChar = char; }
+        else if (char === quoteChar) { inQuote = false; }
+      }
+    }
+    return !inQuote;
+  }
+
+  /**
+   * Splits object properties respecting indentation.
+   * 
+   * @param text - Object content
+   * @returns Array of property strings
+   */
+  private _splitObjectProperties(text: string): string[] {
+    // If no newlines, fall back to comma splitting
+    if (!text.includes('\n')) {
+      return this._splitByDelimiter(text, ',', true);
+    }
+
+    const lines = text.split('\n');
+    const properties: string[] = [];
+    let currentProperty: string[] = [];
+    let baseIndent = -1;
+    let braceDepth = 0;
+    let bracketDepth = 0;
+    let hasEnteredBrace = false;
+    let hasEnteredBracket = false;
+
+    for (const line of lines) {
+      if (!line.trim()) continue; // Skip empty lines
+
+      const indent = line.search(/\S/);
+      if (indent === -1) continue; // Should be covered by trim check
+
+      if (baseIndent === -1) baseIndent = indent;
+
+      // Heuristic: If baseIndent is 0 (due to trim) and we have a complete previous line,
+      // and this line is indented, assume the indentation belongs to the block level (siblings).
+      if (baseIndent === 0 && currentProperty.length === 1 && braceDepth === 0 && bracketDepth === 0) {
+         const prevLine = currentProperty[0].trim();
+         // Check if previous line looks complete (not ending in separator/opener) and has balanced quotes
+         if (!prevLine.endsWith(':') && !prevLine.endsWith('{') && !prevLine.endsWith('[') && !prevLine.endsWith(',') && this._areQuotesBalanced(prevLine)) {
+            if (indent > 0) {
+               baseIndent = indent;
+            }
+         }
+      }
+
+      // Split if:
+      // 1. At base indent AND not inside braces/brackets
+      // 2. OR baseIndent is 0 (trimmed), we are not inside braces/brackets, AND we have previously entered/exited a block (implies completion)
+      const isSplit = (indent === baseIndent || (baseIndent === 0 && (hasEnteredBrace || hasEnteredBracket))) && braceDepth === 0 && bracketDepth === 0;
+
+      if (isSplit) {
+        // New property at base level
+        if (currentProperty.length > 0) {
+          // Join and remove trailing comma
+          properties.push(currentProperty.join('\n').trim().replace(/,$/, ''));
+        }
+        currentProperty = [line];
+        // Reset block flags for new property
+        hasEnteredBrace = false;
+        hasEnteredBracket = false;
+      } else {
+        // Continuation or nested
+        currentProperty.push(line);
+      }
+
+      // Update depths
+      let inQuote = false;
+      let quoteChar = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '\\' && i + 1 < line.length) {
+          i++; continue;
+        }
+        if (['"', "'"].includes(char)) {
+          if (!inQuote) { inQuote = true; quoteChar = char; }
+          else if (char === quoteChar) { inQuote = false; }
+        } else if (!inQuote) {
+          if (char === '{') { braceDepth++; hasEnteredBrace = true; }
+          else if (char === '}') braceDepth--;
+          else if (char === '[') { bracketDepth++; hasEnteredBracket = true; }
+          else if (char === ']') bracketDepth--;
+        }
+      }
+    }
+
+    if (currentProperty.length > 0) {
+      properties.push(currentProperty.join('\n').trim().replace(/,$/, ''));
+    }
+
+    return properties;
+  }
+}
+// End of class
 /**
  * Decodes ZON format string to original data v1.1.0.
  * 
  * @param data - ZON format string
  * @param options - Decode options
- * @returns Decoded data
+ * @returns Decoded data or DecodeResult if extractMetadata is true
  */
-export function decode(data: string, options?: DecodeOptions): any {
-  return new ZonDecoder(options).decode(data);
+export function decode(data: string, options?: DecodeOptions): any | DecodeResult {
+  return new ZonDecoder(options).decode(data, options);
 }

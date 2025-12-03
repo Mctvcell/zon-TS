@@ -319,6 +319,25 @@ describe('ZON Codec', () => {
     });
   });
 
+  describe('Named Tables', () => {
+    test('should correctly resolve dictionary indices in named tables', () => {
+      const zon = `department[1]:Engineering
+employees:@(5):department,active,id,name,role
+0,true,1,User 1,admin
+0,true,2,User 2,user
+0,true,3,User 3,admin
+0,true,4,User 4,user
+0,true,5,User 5,admin`;
+
+      const decoded = decode(zon);
+      
+      expect(decoded.employees).toHaveLength(5);
+      expect(decoded.employees[0].department).toBe('Engineering');
+      expect(decoded.employees[1].department).toBe('Engineering');
+      expect(decoded.employees[4].department).toBe('Engineering');
+    });
+  });
+
   describe('Data type preservation', () => {
     test('Integer vs float distinction', () => {
       const data = {

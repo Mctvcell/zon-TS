@@ -93,14 +93,14 @@ describe('Encoder Conformance (§11.1)', () => {
     
     expect(encoded).toContain('"a,b"');
     expect(encoded).toContain('x:y');
-    expect(encoded).toContain('"say ""hi"""');
+    expect(encoded).toContain("'say \"hi\"'");
   });
 
   test('should escape quotes in strings', () => {
     const data = { text: 'he said "hello"' };
     const encoded = encode(data);
     
-    expect(encoded).toContain('""hello""');
+    expect(encoded).toContain("'he said \"hello\"'");
   });
 
   test('should produce deterministic output', () => {

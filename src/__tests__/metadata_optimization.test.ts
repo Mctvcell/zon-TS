@@ -25,8 +25,8 @@ describe('Metadata Optimization', () => {
 
     const encoded = encoder.encode(data);
     
-    // Should contain grouped context
-    // context{location:Boulder,season:spring_2025,task:Our favorite hikes together}
+    // Should contain grouped context with quoted strings containing spaces
+    // context{location:Boulder,season:spring_2025,task:"Our favorite hikes together"}
     // Note: keys are sorted alphabetically. No colon after key for objects.
     expect(encoded).toContain('context{location:Boulder,season:spring_2025,task:Our favorite hikes together}');
     

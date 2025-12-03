@@ -8,6 +8,7 @@ import {
 import { quoteString } from './utils';
 import { SparseMode } from './types';
 import { TypeInferrer } from '../schema/type-inference';
+import { embedVersion, stripVersion } from './versioning';
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 interface JsonObject { [key: string]: JsonValue }
@@ -27,6 +28,25 @@ interface ColumnAnalysis {
   has_repetition: boolean;
 }
 
+export interface EncodeOptions {
+  /** Anchor interval for streaming (default: 100) */
+  anchorInterval?: number;
+  /** Enable dictionary compression (default: true) */
+  enableDictCompression?: boolean;
+  /** Enable type coercion (default: false) */
+  enableTypeCoercion?: boolean;
+  /** Embed version metadata in output (default: false) */
+  embedMetadata?: boolean;
+  /** Version string to embed (default: "1.1.0") */
+  version?: string;
+  /** Schema ID to embed */
+  schemaId?: string;
+  /** Disable table formatting (default: false) */
+  disableTables?: boolean;
+  /** Disable delta encoding for sequential columns (default: false) */
+  disableDeltaEncoding?: boolean;
+}
+
 /**
  * Encodes data structures into ZON format v1.1.0.
  */
@@ -36,30 +56,59 @@ export class ZonEncoder {
 
   private enableDictionaryCompression: boolean;
   private enableTypeCoercion: boolean;
+  private disableTables: boolean;
+  private disableDeltaEncoding: boolean;
   private typeInferrer: TypeInferrer;
 
   constructor(
     anchorInterval: number = DEFAULT_ANCHOR_INTERVAL, 
     enableDictCompression: boolean = true,
-    enableTypeCoercion: boolean = false
+    enableTypeCoercion: boolean = false,
+    disableTables: boolean = false,
+    disableDeltaEncoding: boolean = false
   ) {
     this.anchor_interval = anchorInterval;
     this.safe_str_re = /^[a-zA-Z0-9_\-\.]+$/;
     this.enableDictionaryCompression = enableDictCompression;
     this.enableTypeCoercion = enableTypeCoercion;
+    this.disableTables = disableTables;
+    this.disableDeltaEncoding = disableDeltaEncoding;
     this.typeInferrer = new TypeInferrer();
   }
 
   /**
    * Encodes data to ZON format.
+   * When disableTables is true, bypasses table generation and formats data directly.
    * 
    * @param data - Data to encode
+   * @param options - Optional encoding options
    * @returns ZON formatted string
    */
-  encode(data: any): string {
-    const [streamData, metadata, streamKey] = this._extractPrimaryStream(data);
+  encode(data: any, options?: EncodeOptions): string {
+    let processedData = data;
+    
+    if (options?.embedMetadata) {
+      processedData = embedVersion(
+        data,
+        options.version || '1.1.0',
+        options.schemaId
+      );
+    }
+    
+    if (this.disableTables) {
+       if (typeof data === 'object' && data !== null) {
+         if (!Array.isArray(data) && Object.keys(data).length === 0) {
+             return "";
+         }
+         return this._formatZonNode(processedData);
+       }
+       return JSON.stringify(processedData);
+    }
 
-    if (!streamData && (!metadata || Object.keys(metadata).length === 0)) {
+    const [streams, metadata] = this._extractStreams(processedData);
+
+    // If no streams and no metadata, format as node
+    if (streams.size === 0 && (!metadata || Object.keys(metadata).length === 0)) {
       if (typeof data === 'object' && data !== null) {
         if (!Array.isArray(data) && Object.keys(data).length === 0) {
             return "";
@@ -69,8 +118,7 @@ export class ZonEncoder {
       return JSON.stringify(data);
     }
 
-    const output: string[] = [];
-
+    // Check for high irregularity in root-level array
     if (Array.isArray(data) && data.length > 0 && data.every(item => typeof item === 'object' && !Array.isArray(item))) {
       const irregularityScore = this._calculateIrregularity(data);
       
@@ -79,76 +127,73 @@ export class ZonEncoder {
       }
     }
 
-    let finalStreamKey = streamKey;
-    if (streamData && streamKey === null) {
-      finalStreamKey = "data";
-    }
+    const output: string[] = [];
 
+    // Write metadata first
     if (metadata && Object.keys(metadata).length > 0) {
       output.push(...this._writeMetadata(metadata));
     }
 
-    if (streamData && finalStreamKey) {
+    // Write all streams as tables
+    const streamEntries = Array.from(streams.entries()).sort((a, b) => {
+      // Sort by key name for consistency
+      return a[0].localeCompare(b[0]);
+    });
+
+    for (const [key, streamData] of streamEntries) {
       if (output.length > 0) {
         output.push("");
       }
-      output.push(...this._writeTable(streamData, finalStreamKey));
+      
+      const finalKey = key || "data";
+      output.push(...this._writeTable(streamData, finalKey));
     }
 
     return output.join("\n");
   }
 
   /**
-   * Extracts the primary data stream from input.
+   * Extracts all uniform arrays that should become tables.
    * 
    * @param data - Input data
-   * @returns Tuple of [stream, metadata, key]
+   * @returns Tuple of [streams Map, metadata]
    */
-  private _extractPrimaryStream(data: any): [any[] | null, Record<string, any>, string | null] {
+  private _extractStreams(data: any): [Map<string, any[]>, Record<string, any>] {
     if (Array.isArray(data)) {
       if (data.length > 0 && typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
-        return [data, {}, null];
+        // Root-level array of objects - treat as single unnamed stream
+        const streams = new Map<string, any[]>();
+        streams.set('', data);
+        return [streams, {}];
       }
       
-      if (data.length > 0 && data.every(item => typeof item !== 'object' || item === null)) {
-        return [null, {}, null];
-      }
-
-      return [null, {}, null];
+      return [new Map(), {}];
     }
 
     if (typeof data === 'object' && data !== null) {
-      const candidates: [string, any[], number][] = [];
+      const streams = new Map<string, any[]>();
+      const metadata: Record<string, any> = {};
       
       for (const [k, v] of Object.entries(data)) {
+        // Check if this is an array of objects (potential table)
         if (Array.isArray(v) && v.length > 0) {
-          if (typeof v[0] === 'object' && !Array.isArray(v[0])) {
-            const score = v.length * Object.keys(v[0]).length;
-            candidates.push([k, v, score]);
+          if (typeof v[0] === 'object' && v[0] !== null && !Array.isArray(v[0])) {
+            // This is a uniform array - should become a table
+            streams.set(k, v);
+          } else {
+            // Array of primitives - goes to metadata
+            metadata[k] = v;
           }
+        } else {
+          // Non-array field - goes to metadata
+          metadata[k] = v;
         }
       }
 
-      if (candidates.length > 0) {
-        candidates.sort((a, b) => {
-          const scoreDiff = b[2] - a[2];
-          if (scoreDiff !== 0) return scoreDiff;
-          return a[0].localeCompare(b[0]);
-        });
-        const [key, stream] = candidates[0];
-        const meta: Record<string, any> = {};
-        
-        for (const [k, v] of Object.entries(data)) {
-          if (k !== key) {
-            meta[k] = v;
-          }
-        }
-        
-        return [stream, meta, key];
-      }
+      return [streams, metadata];
     }
 
-    return [null, typeof data === 'object' ? data : {}, null];
+    return [new Map(), typeof data === 'object' ? data : {}];
   }
 
   /**
@@ -273,13 +318,18 @@ export class ZonEncoder {
     const deltaColumns: string[] = [];
     const regularCoreColumns: string[] = [];
     
-    for (const col of coreColumns) {
-      const values = flatStream.map(row => row[col]);
-      const mode = this._analyzeOptimalSparseMode(values);
-      if (mode === SparseMode.DELTA) {
-        deltaColumns.push(col);
-      } else {
-        regularCoreColumns.push(col);
+    // Skip delta encoding if disabled
+    if (this.disableDeltaEncoding) {
+      regularCoreColumns.push(...coreColumns);
+    } else {
+      for (const col of coreColumns) {
+        const values = flatStream.map(row => row[col]);
+        const mode = this._analyzeOptimalSparseMode(values);
+        if (mode === SparseMode.DELTA) {
+          deltaColumns.push(col);
+        } else {
+          regularCoreColumns.push(col);
+        }
       }
     }
 
@@ -532,6 +582,11 @@ export class ZonEncoder {
 
       const threshold = values.length < 20 ? 0.1 : 0.2;
 
+      // Heuristic: Avoid dictionary for single unique value unless it's long (readability)
+      if (uniqueValues.length === 1 && uniqueValues[0].length < 20) {
+        continue;
+      }
+
       if (savings > threshold && uniqueValues.length < values.length / 2 && uniqueValues.length <= 50) {
         dictionaries.set(col, uniqueValues.sort());
       }
@@ -758,52 +813,9 @@ export class ZonEncoder {
       }
       return "[" + val.map(item => this._formatZonNode(item, visited)).join(",") + "]";
     }
-
-    if (val === null) {
-      return "null";
-    }
-    if (val === true) {
-      return "T";
-    }
-    if (val === false) {
-      return "F";
-    }
-    if (typeof val === 'number') {
-      if (!Number.isInteger(val)) {
-        let s = String(val);
-        if (!/[\.e]/i.test(s)) {
-          s += '.0';
-        }
-        return s;
-      } else {
-        return String(val);
-      }
-    }
-
-  const s = String(val);
-
-  if (s.includes('\n') || s.includes('\r')) {
-    return JSON.stringify(s);
+    
+    return this._formatValue(val);
   }
-
-  if (this._isISODate(s)) {
-    return s;
-  }
-
-  if (this._needsTypeProtection(s)) {
-    return JSON.stringify(s);
-  }
-
-  if (!s.trim()) {
-    return JSON.stringify(s);
-  }
-
-  if (/[,\{\}\[\]"]/.test(s)) {
-    return JSON.stringify(s);
-  }
-
-  return s;
-}
 
   /**
    * Formats a value with minimal quoting.
@@ -815,13 +827,11 @@ export class ZonEncoder {
     if (val === null || val === undefined) {
       return "null";
     }
-    if (val === true) {
-      return "T";
-    }
-    if (val === false) {
-      return "F";
-    }
+
     if (typeof val === 'boolean') {
+      if (this.enableTypeCoercion) {
+        return val ? "true" : "false";
+      }
       return val ? "T" : "F";
     }
     if (typeof val === 'number') {
@@ -829,29 +839,22 @@ export class ZonEncoder {
         return "null";
       }
       
+      // Removed scientific notation expansion as it was incorrect and unnecessary
+      // ZON supports scientific notation natively
       if (Number.isInteger(val)) {
         return String(val);
       }
       
       let s = String(val);
-      
-      if (s.includes('e') || s.includes('E')) {
-        const parts = s.split(/[eE]/);
-        const mantissa = parseFloat(parts[0]);
-        const exponent = parseInt(parts[1], 10);
-        
-        if (exponent >= 0) {
-          s = (mantissa * Math.pow(10, exponent)).toString();
-        } else {
-          s = mantissa.toFixed(Math.abs(exponent));
-        }
-      }
-      
-      if (!s.includes('.')) {
+      if (!s.includes('.') && !s.includes('e') && !s.includes('E')) {
         s += '.0';
       }
       
       return s;
+    }
+
+    if (val instanceof Date) {
+      return val.toISOString();
     }
 
     if (Array.isArray(val) || (typeof val === 'object' && val !== null)) {
@@ -977,7 +980,11 @@ export class ZonEncoder {
       return true;
     }
 
-    if (/[,\n\r\t"\[\]|;]/.test(s)) {
+    if (/[,\n\r\t"\[\]{}';]/.test(s)) {
+      return true;
+    }
+
+    if (s.includes('//') || s.includes('/*')) {
       return true;
     }
 
@@ -1034,11 +1041,18 @@ export class ZonEncoder {
  * Encodes data to ZON format v1.1.0.
  * 
  * @param data - Data to encode
- * @param anchorInterval - Anchor interval for encoding
+ * @param options - Optional encoding options
  * @returns ZON formatted string
  */
-export function encode(data: any, anchorInterval: number = DEFAULT_ANCHOR_INTERVAL, options: { typeCoercion?: boolean } = {}): string {
-  return new ZonEncoder(anchorInterval, true, options.typeCoercion).encode(data);
+export function encode(data: any, options?: EncodeOptions): string {
+  const encoder = new ZonEncoder(
+    options?.anchorInterval,
+    options?.enableDictCompression,
+    options?.enableTypeCoercion,
+    options?.disableTables,
+    options?.disableDeltaEncoding
+  );
+  return encoder.encode(data, options);
 }
 
 import { LLMOptimizer } from '../tools/llm-optimizer';

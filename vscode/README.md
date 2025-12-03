@@ -1,6 +1,6 @@
 # ZON Format VS Code Extension
 
-Syntax highlighting for ZON (Z-Object Notation) files (`.zon`, `.zonf`).
+Syntax highlighting for ZON (Z-Object Notation) files (`.zonf`).
 
 ## Features
 

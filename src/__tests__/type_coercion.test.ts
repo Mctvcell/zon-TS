@@ -62,9 +62,9 @@ describe('Intelligent Type Coercion', () => {
     const encoder = new ZonEncoder(undefined, true, true);
     const encoded = encoder.encode(data);
     
-    // Should be T/F
-    expect(encoded).toContain('T');
-    expect(encoded).toContain('F');
+    // With enableTypeCoercion=true, should be true/false for clarity
+    expect(encoded).toContain('true');
+    expect(encoded).toContain('false');
     
     const decoded = decoder.decode(encoded);
     expect(decoded[0].active).toBe(true);

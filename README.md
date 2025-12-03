@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/zon-format.svg)](https://www.npmjs.com/package/zon-format)
 [![GitHub stars](https://img.shields.io/github/stars/ZON-Format/zon-TS?style=social)](https://github.com/ZON-Format/zon-TS)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-205%2F205%20passing-brightgreen.svg)](#quality--testing)
+[![Tests](https://img.shields.io/badge/tests-288%2F288%20passing-brightgreen.svg)](#quality--testing)
 [![npm downloads](https://img.shields.io/npm/dm/zon-format?color=red)](https://www.npmjs.com/package/zon-format)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -43,6 +43,7 @@ bun add zon-format
 - [Installation & Quick Start](#installation--quick-start)
 - [Format Overview](#format-overview)
 - [API Reference](#api-reference)
+- [Roadmap & Status](#roadmap--status)
 - [Documentation](#documentation)
 
 ---
@@ -648,6 +649,247 @@ zon decode users.zonf > users.json
 
 ZON files conventionally use the `.zonf` extension to distinguish them from other formats.
 
+---
+
+## Encoding Modes
+
+ZON provides **three encoding modes** optimized for different use cases. **Compact mode is the default** for maximum token efficiency.
+
+### Mode Overview
+
+| Mode | Best For | Token Efficiency | Human Readable | LLM Clarity | Default |
+|------|----------|------------------|----------------|-------------|---------|
+| **compact** | Production APIs, LLMs | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ✅ YES |
+| **llm-optimized** | AI workflows | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | |
+| **readable** | Config files, debugging | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | |
+
+> [!IMPORTANT]
+> **Readable mode is for HUMANS only!** Use `compact` or `llm-optimized` for LLM workflows to maximize token efficiency.
+
+### 1. Compact Mode (DEFAULT)
+
+Analyzes your data and automatically selects the best encoding strategy.
+
+```typescript
+import { encodeAdaptive } from 'zon-format';
+
+const result = encodeAdaptive(data, { mode: 'auto' });
+```
+
+**Output:**
+```zon
+config{theme:dark,version:1.2.0}
+
+users:@(3):active,email,id,name,role
+true,alice@example.com,1,"Alice Smith",admin
+false,bob@example.com,2,"Bob Jones",user
+true,carol@example.com,3,"Carol White",editor
+```
+
+### 2. Compact Mode
+
+Maximum compression using tables, delta encoding, and abbreviations (`T`/`F` for booleans).
+
+```typescript
+const result = encodeAdaptive(data, { mode: 'compact' });
+```
+
+**Output:**
+```zon
+config{theme:dark,version:1.2.0}
+
+users:@(3):active,email,id,name,role
+T,alice@example.com,1,"Alice Smith",admin
+F,bob@example.com,2,"Bob Jones",user
+T,carol@example.com,3,"Carol White",editor
+```
+
+### 3. Readable Mode
+
+YAML-like syntax optimized for human readability. Perfect for configuration files.
+
+```typescript
+const result = encodeAdaptive(data, { mode: 'readable' });
+```
+
+**Output:**
+```zon
+config:
+  theme:dark
+  version:1.2.0
+users:
+  - active:true
+    email:alice@example.com
+    id:1
+    name:"Alice Smith"
+    role:admin
+  - active:false
+    email:bob@example.com
+    id:2
+    name:"Bob Jones"
+    role:user
+```
+
+**Indentation Control:**
+
+```typescript
+// Default: 2 spaces
+encodeAdaptive(data, { mode: 'readable' });
+
+// Custom indentation: 4 spaces
+encodeAdaptive(data, { mode: 'readable', indent: 4 });
+
+// Flat (0 spaces)
+encodeAdaptive(data, { mode: 'readable', indent: 0 });
+```
+
+### 4. LLM-Optimized Mode
+
+Balances token efficiency with AI comprehension. Uses `true`/`false` instead of `T`/`F` for better LLM understanding.
+
+```typescript
+const result = encodeAdaptive(data, { mode: 'llm-optimized' });
+```
+
+**Output:**
+```zon
+config:
+  theme:dark
+  version:1.2.0
+users:
+  - active:true
+    email:alice@example.com
+    id:1
+    name:"Alice Smith"
+    role:admin
+```
+
+---
+
+## API Usage: encode() vs encodeAdaptive()
+
+### encodeAdaptive()
+
+High-level API with intelligent mode selection and formatting.
+
+```typescript
+import { encodeAdaptive } from 'zon-format';
+
+// With mode selection
+const readable = encodeAdaptive(data, { mode: 'readable' });
+const compact = encodeAdaptive(data, { mode: 'compact' });
+const llm = encodeAdaptive(data, { mode: 'llm-optimized' });
+const auto = encodeAdaptive(data, { mode: 'auto' });
+
+// With indentation (readable mode only)
+const indented = encodeAdaptive(data, { mode: 'readable', indent: 4 });
+```
+
+### encode()
+
+Low-level API for fine-grained control over encoding options.
+
+```typescript
+import { encode } from 'zon-format';
+
+// Manual configuration
+const result = encode(data, {
+  enableDictCompression: true,    // Use dictionary compression for repeated strings
+  enableTypeCoercion: false,      // Keep type information explicit
+  disableTables: false,           // Allow table format for uniform data
+  anchorInterval: 100             // Streaming anchor interval
+});
+```
+
+**When to use each:**
+- **encodeAdaptive**: For most use cases. Simple, intelligent, handles mode selection.
+- **encode**: When you need precise control over compression features.
+
+---
+
+## Best Practices
+
+### ✅ Flat Nesting (Highly Recommended)
+
+ZON achieves maximum compression with flat, tabular data structures. Deep nesting reduces efficiency.
+
+**Recommended:**
+```typescript
+{
+  employees: [
+    { id: 1, name: "Alice", department: "Engineering" },
+    { id: 2, name: "Bob", department: "Sales" }
+  ]
+}
+```
+
+**Output (58 tokens):**
+```zon
+employees:@(2):department,id,name
+Engineering,1,Alice
+Sales,2,Bob
+```
+
+**Avoid:**
+```typescript
+{
+  company: {
+    departments: {
+      engineering: { employees: [{ id: 1, name: "Alice" }] },
+      sales: { employees: [{ id: 2, name: "Bob" }] }
+    }
+  }
+}
+```
+
+**Output (93 tokens - 60% more!):**
+```zon
+company{departments{engineering{employees[{id:1,name:Alice}]},sales{employees[{id:2,name:Bob}]}}}
+```
+
+**Why flat is better:**
+1. **Tables work**: Uniform data → table format → massive token savings
+2. **Compression wins**: Repeated keys eliminated via column headers
+3. **Delta encoding**: Sequential IDs compressed (1, +1, +1 vs 1, 2, 3)
+4. **LLM friendly**: Tabular data is easier for AI to parse and understand
+
+### Mode Selection Guide
+
+| Use Case | Recommended Mode | Why |
+|----------|------------------|-----|
+| Production APIs | `compact` | Maximum efficiency |
+| Config files | `readable` | Easy editing |
+| LLM prompts | `llm-optimized` | Best AI understanding |
+| Mixed/unknown | `auto` | Adapts automatically |
+| Debugging | `readable` | Easiest inspection |
+
+### When to Use Readable Mode
+
+> [!IMPORTANT]
+> **Readable mode is for HUMANS, not LLMs!**
+> - Use `readable` mode for configuration files, debugging, and human editing
+> - Use `compact` or `llm-optimized` modes for sending data to LLMs
+> - The braces and indentation in readable mode prioritize clarity over token efficiency
+
+**Best Use Cases:**
+- Configuration files edited by humans
+- Debug/development data inspection
+- Documentation examples
+- Git-friendly data files
+
+**For LLM workflows:**
+- ❌ Don't use `readable` mode - extra braces cost tokens
+- ✅ Use `compact` mode (max efficiency)
+- ✅ Use `llm-optimized` mode (balanced)
+- ✅ Use `auto` mode (intelligent selection)
+
+**Note:** Readable mode uses indentation and braces for visual clarity. The decoder is **format-agnostic** - it parses any valid ZON syntax regardless of which mode was used to encode it. Modes only affect the **encoder's output format**, not the decoder's ability to read it.
+
+
+---
+
+
+
 **Notes:**
 - The CLI reads from the specified file and outputs to stdout
 - Use shell redirection (`>`) to save output to a file
@@ -906,6 +1148,28 @@ Quick reference for ZON format syntax with practical examples.
 - Arrays (tabular, inline, mixed)
 - Quoting rules and escape sequences
 - Complete examples with JSON comparisons
+
+## Complete Examples
+
+### Encoding Modes
+
+ZON supports 4 encoding modes to optimize for different use cases. See generated examples in `examples/modes/`:
+
+- **[Auto Mode](./examples/modes/auto.zonf)**: Smart selection based on data analysis.
+- **[Compact Mode](./examples/modes/compact.zonf)**: Minimal whitespace, maximum density.
+- **[Readable Mode](./examples/modes/readable.zonf)**: Human-friendly formatting.
+- **[LLM Optimized](./examples/modes/llm-optimized.zonf)**: Balanced for token efficiency.
+
+### Nested Data Examples
+
+See how different modes handle deep nesting:
+
+- **[Nested Auto](./examples/modes/nested_auto.zonf)**
+- **[Nested Compact](./examples/modes/nested_compact.zonf)**
+- **[Nested Readable](./examples/modes/nested_readable.zonf)**
+- **[Nested LLM](./examples/modes/nested_llm.zonf)**
+
+### Example 1: Simple Object
 - Tips for LLM usage
 
 **Perfect for:** Quick lookups, learning the syntax, copy-paste examples

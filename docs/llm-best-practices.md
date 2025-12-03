@@ -6,6 +6,65 @@ Copyright (c) 2025 ZON-FORMAT (Roni Bhakta)
  
  Guide for maximizing ZON's effectiveness in LLM applications. Updated for v1.1.0.
 
+## Encoding Mode Selection for LLMs
+
+Choose the right ZON mode for your LLM workflow:
+
+### Recommended Modes
+
+| Scenario | Mode | Why |
+|----------|------|-----|
+| **Prompts (GPT-4, Claude)** | `llm-optimized` | Uses `true`/`false` for better comprehension |
+| **High-volume APIs** | `compact` | Maximum token savings |
+| **RAG context** | `llm-optimized` | Balances clarity and efficiency |
+| **Function calling** | `compact` | Minimal tokens |
+| **Human review needed** | `readable` | YAML-like, easy to verify |
+| **Mixed/unknown** | `auto` | Adapts automatically |
+
+### Token Impact Examples
+
+**Same Data, Different Modes:**
+
+```typescript
+const userData = {
+  users: [
+    { id: 1, name: "Alice", active: true, role: "admin" },
+    { id: 2, name: "Bob", active: false, role: "user" }
+  ]
+};
+```
+
+**Compact Mode (38 tokens):**
+```zon
+users:@(2):active,id,name,role
+T,1,Alice,admin
+F,2,Bob,user
+```
+
+**LLM-Optimized Mode (42 tokens - 10% more, but clearer):**
+```zon
+users:@(2):active,id,name,role
+true,1,Alice,admin
+false,2,Bob,user
+```
+
+**Readable Mode (52 tokens - 37% more, human-friendly):**
+```zon
+users:
+  - active:true
+    id:1
+    name:Alice
+    role:admin
+  - active:false
+    id:2
+    name:Bob
+    role:user
+```
+
+**Use compact for production, llm-optimized for better AI understanding, readable for debugging.**
+
+---
+
 ## Why ZON for LLMs?
 
 LLM API costs are directly tied to token count. ZON reduces tokens by **23.8% vs JSON** while achieving **100% retrieval accuracy**.

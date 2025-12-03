@@ -59,6 +59,46 @@ config:"{database:{host:localhost,port:5432}}"
 
 ---
 
+## Encoding Modes
+
+ZON supports multiple encoding modes for different use cases:
+
+### Mode Comparison
+
+| Mode | Boolean Format | Table Compression | Indentation | Best For |
+|------|----------------|-------------------|-------------|----------|
+| **auto** | `T`/`F` | ✅ Yes | No | General purpose |
+| **compact** | `T`/`F` | ✅ Yes | No | Production APIs |
+| **readable** | `true`/`false` | ❌ No | ✅ Yes | Config files |
+| **llm-optimized** | `true`/`false` | ✅ Yes | Optional | AI workflows |
+
+### Readable Mode Syntax
+
+YAML-like format with indentation and dash-separated lists:
+
+```zonf
+# Readable mode output
+config:
+  theme:dark
+  version:1.0
+users:
+  - active:true
+    id:1
+    name:Alice
+    role:admin
+  - active:false
+    id:2
+    name:Bob
+    role:user
+```
+
+**Indentation Control:**
+- Default: 2 spaces
+- Configurable: `encodeAdaptive(data, { mode: 'readable', indent: 4 })`
+- Flat: `indent: 0` removes indentation
+
+---
+
 ## Arrays
 
 ### Primitive Arrays (Inline)

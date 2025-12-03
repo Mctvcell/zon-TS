@@ -1,7 +1,16 @@
-export { encode, ZonEncoder } from './core/encoder';
-export { decode, ZonDecoder, DecodeOptions } from './core/decoder';
+export { encode, encodeLLM, ZonEncoder, type EncodeOptions } from './core/encoder';
+export { decode, ZonDecoder, type DecodeOptions, type DecodeResult } from './core/decoder';
 export { ZonDecodeError, ZonDecodeErrorDetails } from './core/exceptions';
 export * from './schema/schema';
 export * from './tools/splitter';
 export * from './core/stream';
 export * as constants from './core/constants';
+export * from './core/versioning';
+export * from './core/migration';
+export { encodeAdaptive, recommendMode, type AdaptiveEncodeOptions, type AdaptiveEncodeResult, type EncodingMode } from './core/adaptive';
+export { DataComplexityAnalyzer, type ComplexityMetrics, type AnalysisResult } from './core/analyzer';
+export { encodeBinary, decodeBinary, BinaryZonEncoder, BinaryZonDecoder } from './binary';
+export * from './tools/converter';
+export * from './tools/helpers';
+export * from './tools/printer';
+export * from './tools/validator';
