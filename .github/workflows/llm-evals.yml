@@ -149,12 +149,12 @@ jobs:
       
       - name: Check for regressions
         id: regression_check
-        run: npm run eval:check-regressions
+        run: npm run eval:check-regressions -- --type=full
         continue-on-error: true
       
       - name: Save as new baseline
         if: github.ref == 'refs/heads/main' && steps.regression_check.outcome == 'success'
-        run: npm run eval:baseline
+        run: npm run eval:baseline -- --type=full
       
       - name: Upload eval results
         uses: actions/upload-artifact@v4

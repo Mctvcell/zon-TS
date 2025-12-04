@@ -9,16 +9,43 @@ const fs = require('fs');
 const path = require('path');
 const { FileEvalStorage } = require('../../dist/evals');
 
+const { parseArgs } = require('util');
+
 async function saveBaseline() {
-  console.log('💾 Saving baseline...\n');
+  const { values } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      type: { type: 'string', default: 'smoke' }
+    }
+  });
+
+  console.log(`💾 Saving baseline for ${values.type}...\n`);
   
+  if (values.type === 'full') {
+    const resultsPath = path.join(__dirname, '../results/accuracy-results.json');
+    const baselinePath = path.join(__dirname, '../results/accuracy-baseline.json');
+    
+    if (!fs.existsSync(resultsPath)) {
+      console.error('❌ No full evaluation results found');
+      process.exit(1);
+    }
+    
+    const results = JSON.parse(fs.readFileSync(resultsPath, 'utf-8'));
+    fs.writeFileSync(baselinePath, JSON.stringify(results, null, 2));
+    
+    console.log('✅ Full baseline saved successfully!');
+    console.log(`   Timestamp: ${results.timestamp}`);
+    process.exit(0);
+  }
+
   const storage = new FileEvalStorage('./benchmarks/results');
   
   try {
     // Load latest results
     const latest = await storage.getLatest('smoke-test');
     if (!latest) {
-      console.error('❌ No recent eval results to save as baseline');
+      console.error('❌ No recent smoke test results to save as baseline');
+      console.error('   Run "npm run eval:smoke" first');
       process.exit(1);
     }
     
@@ -31,7 +58,7 @@ async function saveBaseline() {
     
     await storage.save(baselineResult);
     
-    console.log('✅ Baseline saved successfully!');
+    console.log('✅ Smoke test baseline saved successfully!');
     console.log(`   Test ID: ${baselineResult.testId}`);
     console.log(`   Timestamp: ${new Date(baselineResult.timestamp).toISOString()}`);
     process.exit(0);
